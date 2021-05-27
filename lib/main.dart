@@ -1,5 +1,3 @@
-import 'dart:html';
-
 import 'package:flutter/material.dart';
 import 'package:bottom_navy_bar/bottom_navy_bar.dart';
 
@@ -57,7 +55,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     Color.fromARGB(252, 62, 120, 189),
                     Color.fromARGB(255, 91, 104, 226)
                   ],
-                  tileMode: TileMode.clamp)),
+                  tileMode: TileMode.mirror)),
           child: BottomNavyBar(
             backgroundColor: Colors.transparent,
             selectedIndex: _selectedIndex,
@@ -135,12 +133,43 @@ class _BlueState extends State<Blue> {
                     alignment: Alignment.topLeft,
                     heightFactor: 0.7,
                     widthFactor: 1,
-                    child: Container(
-                      child: Image(
-                        fit: BoxFit.fitWidth,
-                        image: AssetImage('assets/placeholder_map.png'),
+                    child: Stack(children: [
+                      Container(
+                        width: double.infinity,
+                        child: Image(
+                          fit: BoxFit.fitWidth,
+                          image: AssetImage('assets/placeholder_map.png'),
+                        ),
                       ),
-                    )))),
+                      Container(
+                        alignment: Alignment.topRight,
+                        child: Container(
+                          constraints: BoxConstraints(maxWidth: 125),
+                          margin: EdgeInsets.only(top: 10, right: 5),
+                          padding: EdgeInsets.fromLTRB(10, 7, 10, 7),
+                          decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(20),
+                              gradient: LinearGradient(
+                                  begin: Alignment(-2.870196942339476e-7,
+                                      -2.9523809173103817),
+                                  end: Alignment(-3.471565204193894e-7,
+                                      7.0714286847386845),
+                                  stops: [0, 0.7713881134986877],
+                                  colors: [
+                                    Color.fromARGB(155, 157, 75, 239),
+                                    Color.fromARGB(158, 38, 146, 192)
+                                  ],
+                                  tileMode: TileMode.mirror)),
+                          child: Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.done_outlined),
+                                Text(" Location")
+                              ]),
+                        ),
+                      ),
+                    ])))),
         Container(
             padding: EdgeInsets.only(left: 20),
             child: Row(
@@ -174,7 +203,7 @@ class _BlueState extends State<Blue> {
                     Color.fromARGB(137, 240, 132, 34),
                     Color.fromARGB(255, 142, 185, 48),
                   ],
-                  tileMode: TileMode.clamp),
+                  tileMode: TileMode.mirror),
             ),
             child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -183,7 +212,7 @@ class _BlueState extends State<Blue> {
                   Container(
                     margin: EdgeInsets.fromLTRB(20, 10, 0, 0),
                     child: const ListTile(
-                      title: Text('Bossman Chicken',
+                      title: Text('National HQs',
                           style: TextStyle(
                             fontFamily: 'Raleway',
                             fontSize: 30,
@@ -227,39 +256,55 @@ class _BlueState extends State<Blue> {
           ),
         ),
         Container(
-          margin: EdgeInsets.fromLTRB(35, 30, 35, 0),
-          child: ElevatedButton(
-            child: Container(
-              width: double.infinity,
+          margin: EdgeInsets.fromLTRB(20, 50, 20, 0),
+          child: DecoratedBox(
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                    begin: Alignment(0.0009855687786108902, -4.543046378961659),
-                    end: Alignment(0.0009854648765976748, 3.470198684990992),
-                    stops: [0, 1],
-                    colors: [
-                      Color.fromARGB(255, 67, 255, 2),
-                      Color.fromARGB(173, 43, 166, 219)
-                    ],
-                    tileMode: TileMode.clamp),
-              ),
-              child: Text(
-                'Get directions.',
-                style: TextStyle(
-                  fontFamily: 'Raleway',
-                  color: Colors.black,
-                  fontSize: 25,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.5),
+                      spreadRadius: 5,
+                      blurRadius: 7,
+                      offset: Offset(0, 3), // changes position of shadow
+                    )
+                  ],
+                  gradient: LinearGradient(
+                      begin:
+                          Alignment(0.0009855687786108902, -4.543046378961659),
+                      end: Alignment(0.0009854648765976748, 3.470198684990992),
+                      stops: [0, 1],
+                      colors: [
+                        Color.fromARGB(255, 67, 255, 2),
+                        Color.fromARGB(173, 43, 166, 219)
+                      ],
+                      tileMode: TileMode.mirror)),
+              child: Container(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {},
+                  style: ButtonStyle(
+                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                      RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20)),
+                    ),
+                    elevation: MaterialStateProperty.all(0),
+                    foregroundColor: MaterialStateProperty.all(Colors.black),
+                    backgroundColor:
+                        MaterialStateProperty.all(Colors.transparent),
+                    padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
+                      EdgeInsets.all(30),
+                    ),
+                  ),
+                  child: Text(
+                    'Get directions.',
+                    style: TextStyle(
+                      fontFamily: 'Raleway',
+                      color: Colors.black,
+                      fontSize: 25,
+                    ),
+                  ),
                 ),
-              ),
-            ),
-            style: ButtonStyle(
-              backgroundColor: MaterialStateProperty.all(Colors.transparent),
-              foregroundColor: MaterialStateProperty.all(Colors.transparent),
-              padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
-                EdgeInsets.all(0),
-              ),
-            ),
-            onPressed: () => {print("clicked")},
-          ),
+              )),
         ),
       ],
     );
