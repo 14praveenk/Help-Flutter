@@ -33,7 +33,6 @@ jobs:
       - name: 🚧 Flutter Build Web
         run: |
           flutter pub get
-          flutter test
           flutter build web
       
       - name: 🚀 Deploy web to Github Pages
