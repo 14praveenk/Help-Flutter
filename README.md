@@ -1,16 +1,15 @@
-# help
+<p align="center">
+  <h3 align="center">Help</h3>
+  <p align="center">
+    An intuitive, simple and powerful PWA with the aim to help save lives.
+    <br>
+    <a href="https://help.youthought.co.uk"><strong>Visit Our Demo &raquo;</strong></a>
+  </p>
+</p>
+                  
 
-A new Flutter project.
+# Introduction
 
-## Getting Started
 
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://flutter.dev/docs/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://flutter.dev/docs/cookbook)
-
-For help getting started with Flutter, view our
-[online documentation](https://flutter.dev/docs), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Welcome to Help. This repository holds most of the code behind the Help app.
+<hr>
