@@ -32,7 +32,7 @@ jobs:
           GOOGLE_SERVICES: ${{ secrets.GOOGLE_SERVICES }}
         run: |
           echo $FIREBASE_CONFIG >> web/firebase-config.js
-          echo $ENV >> .env
+          echo $ENV >> dotenv
           echo $GOOGLE_SERVICES >> android/app/google-services.json
 
       - name: 🏗️ Flutter Setup
