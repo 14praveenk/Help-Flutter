@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:geoflutterfire2/geoflutterfire2.dart';
-import 'package:geolocator/geolocator.dart';
+import 'package:location/location.dart';
+import 'package:location/location.dart' as loc;
 import 'dart:async';
 import 'package:what3words/what3words.dart';
 import 'package:what3words/what3words.dart' as w3w;
@@ -12,11 +13,11 @@ class Init {
   String aname = "";
   var api = What3WordsV3(dotenv.env['W3WKEY'].toString());
   Future initialize() async {
-    Position currentPosition = await _determinePosition();
+    LocationData currentPosition = await _determinePosition();
     // Create and execute a request to obtain a grid section within the provided bounding box
     var coordinates = await api
         .convertTo3wa(w3w.Coordinates(
-            currentPosition.latitude, currentPosition.longitude))
+            currentPosition.latitude!, currentPosition.longitude!))
         .execute();
 
     if (coordinates.isSuccessful()) {
@@ -82,40 +83,29 @@ class Init {
         .first;
   }
 
-  Future<Position> _determinePosition() async {
-    bool serviceEnabled;
-    LocationPermission permission;
+  Future<loc.LocationData> _determinePosition() async {
+    loc.Location location = new loc.Location();
 
-    // Test if location services are enabled.
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      // Location services are not enabled don't continue
-      // accessing the position and request users of the
-      // App to enable the location services.
-      return Future.error('Location services are disabled.');
-    }
+    bool _serviceEnabled;
+    PermissionStatus _permissionGranted;
+    LocationData _locationData;
 
-    permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        // Permissions are denied, next time you could try
-        // requesting permissions again (this is also where
-        // Android's shouldShowRequestPermissionRationale
-        // returned true. According to Android guidelines
-        // your App should show an explanatory UI now.
-        return Future.error('Location permissions are denied');
+    _serviceEnabled = await location.serviceEnabled();
+    if (!_serviceEnabled) {
+      _serviceEnabled = await location.requestService();
+      if (!_serviceEnabled) {
+        return Future.error("Not granted");
       }
     }
 
-    if (permission == LocationPermission.deniedForever) {
-      // Permissions are denied forever, handle appropriately.
-      return Future.error(
-          'Location permissions are permanently denied, we cannot request permissions.');
+    _permissionGranted = await location.hasPermission();
+    if (_permissionGranted == PermissionStatus.denied) {
+      _permissionGranted = await location.requestPermission();
+      if (_permissionGranted != PermissionStatus.granted) {
+        return Future.error("Not granted");
+      }
     }
 
-    // When we reach here, permissions are granted and we can
-    // continue accessing the position of the device.
-    return await Geolocator.getCurrentPosition();
+    return await location.getLocation();
   }
 }

@@ -32,7 +32,7 @@ dependencies:
   cloud_firestore: ^2.2.0
   geoflutterfire2: ^2.3.6
   flutter_html: ^2.0.0
-  geolocator: ^7.0.3
+  location: ^4.2.3
   cached_network_image: ^3.0.0
   what3words: ^3.1.0-nullsafety.3
   http: ^0.13.3
@@ -41,6 +41,7 @@ dependencies:
   flutter_map_marker_popup: ^1.0.0
   georange: ^1.0.0
   flutter_dotenv: ^5.0.0
+  js: ^0.6.3
 dev_dependencies:
   flutter_test:
     sdk: flutter

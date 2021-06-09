@@ -43,9 +43,9 @@ jobs:
       - name: 🚧 Flutter Build Web
         run: |
           flutter pub get
-          flutter build web
+          flutter build web --no-sound-null-safety
 
-      - name: Deploy to Vercel
+      - name: 🚀 Deploy to Vercel
         uses: amondnet/vercel-action@v20
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }} # Required
