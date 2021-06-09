@@ -1,4 +1,4 @@
-package com.example.help
+package uk.fetchhelp.help
 
 import io.flutter.embedding.android.FlutterActivity
 

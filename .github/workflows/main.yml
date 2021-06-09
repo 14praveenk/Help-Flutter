@@ -25,6 +25,16 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
       
+      - shell: bash
+        env:
+          FIREBASE_CONFIG: ${{ secrets.FIREBASE_CONFIG }}
+          ENV: ${{ secrets.ENV }}
+          GOOGLE_SERVICES: ${{ secrets.GOOGLE_SERVICES }}
+        run: |
+          echo $FIREBASE_CONFIG >> web/index.html
+          echo $ENV >> .env
+          echo $GOOGLE_SERVICES >> android/app/google-services.json
+
       - name: Flutter Setup
         uses: subosito/flutter-action@v1
         with:

@@ -1,35 +1,120 @@
+import 'dart:async';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:bottom_navy_bar/bottom_navy_bar.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter_html/flutter_html.dart';
+import 'init.dart';
+import 'splash.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:flutter_map_marker_popup/flutter_map_marker_popup.dart';
+import 'popupMsg.dart';
+import 'package:georange/georange.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-void main() => runApp(MyApp());
+Future<void> main() async {
+  await dotenv.load(fileName: ".env");
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(App());
+}
+
+class App extends StatefulWidget {
+  // Create the initialization Future outside of `build`:
+  @override
+  _AppState createState() => _AppState();
+}
+
+class _AppState extends State<App> {
+  /// The future is part of the state of our widget. We should not call `initializeApp`
+  /// directly inside [build].
+  final Future<FirebaseApp> _initialization = Firebase.initializeApp();
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder(
+      // Initialize FlutterFire:
+      future: _initialization,
+      builder: (context, snapshot) {
+        // Check for errors
+        if (snapshot.hasError) {
+          return Yellow();
+        }
+
+        // Once complete, show your application
+        if (snapshot.connectionState == ConnectionState.done) {
+          return MyApp();
+        }
+
+        // Otherwise, show something whilst waiting for initialization to complete
+        return Yellow();
+      },
+    );
+  }
+}
 
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Help',
-      home: SafeArea(child: MyHomePage()),
+      home: FutureBuilder(
+        future: Init().initialize(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.done) {
+            return SafeArea(child: MyHomePage(initData: snapshot.data));
+          } else {
+            return SplashScreen();
+          }
+        },
+      ),
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
+  final Object? initData;
+  MyHomePage({Key? key, required this.initData}) : super(key: key);
   @override
   _MyHomePageState createState() => _MyHomePageState();
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  static const List<AlignmentGeometry> alignments = [
+    Alignment.centerLeft,
+    Alignment.topCenter,
+    Alignment.centerRight,
+    Alignment.bottomCenter,
+    Alignment.center,
+  ];
   int _selectedIndex = 1;
+  String aedName = "";
   final PageController _pageController = PageController(initialPage: 1);
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance!.addPostFrameCallback((_) {});
+  }
 
+  bool rotate = true;
+  bool fade = true;
+  bool snapToMarker = true;
+  AlignmentGeometry popupAlignment = alignments[1];
+  AlignmentGeometry anchorAlignment = alignments[1];
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: PageView(
         controller: _pageController,
         children: <Widget>[
-          Red(),
-          Blue(),
+          Red(
+              snap: _popupSnap,
+              rotate: rotate,
+              fade: fade,
+              markerAnchorAlign: _markerAnchorAlign,
+              initData: widget.initData),
+          Blue(initData: widget.initData),
           Yellow(),
         ],
         onPageChanged: (page) {
@@ -99,21 +184,133 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
     );
   }
+
+  AnchorAlign get _markerAnchorAlign {
+    return <AlignmentGeometry, AnchorAlign>{
+      Alignment.centerLeft: AnchorAlign.left,
+      Alignment.topCenter: AnchorAlign.top,
+      Alignment.centerRight: AnchorAlign.right,
+      Alignment.bottomCenter: AnchorAlign.bottom,
+      Alignment.center: AnchorAlign.center,
+    }[anchorAlignment]!;
+  }
+
+  PopupSnap get _popupSnap {
+    if (snapToMarker) {
+      return <AlignmentGeometry, PopupSnap>{
+        Alignment.centerLeft: PopupSnap.markerLeft,
+        Alignment.topCenter: PopupSnap.markerTop,
+        Alignment.centerRight: PopupSnap.markerRight,
+        Alignment.bottomCenter: PopupSnap.markerBottom,
+        Alignment.center: PopupSnap.markerCenter,
+      }[popupAlignment]!;
+    } else {
+      return <AlignmentGeometry, PopupSnap>{
+        Alignment.centerLeft: PopupSnap.mapLeft,
+        Alignment.topCenter: PopupSnap.mapTop,
+        Alignment.centerRight: PopupSnap.mapRight,
+        Alignment.bottomCenter: PopupSnap.mapBottom,
+        Alignment.center: PopupSnap.mapCenter,
+      }[popupAlignment]!;
+    }
+  }
 }
 
 class Red extends StatefulWidget {
+  final Object? initData;
+  final PopupSnap snap;
+  final bool rotate;
+  final bool fade;
+  final AnchorAlign markerAnchorAlign;
+  Red(
+      {Key? key,
+      required this.snap,
+      required this.rotate,
+      required this.fade,
+      required this.markerAnchorAlign,
+      required this.initData})
+      : super(key: key);
   @override
   _RedState createState() => _RedState();
 }
 
 class _RedState extends State<Red> {
+  List<Marker> allMarkers = [];
+  List<String> hashMarkers = [];
+  final PopupController _popupLayerController = PopupController();
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() {
+      var r = (widget.initData as dynamic)[4].length;
+      for (var x = 0; x < r; x++) {
+        GeoRange georange = GeoRange();
+        hashMarkers.add(georange.encode(
+            ((widget.initData as dynamic)[4][x].data())['position']['geopoint']
+                .latitude,
+            (((widget.initData as dynamic)[4][x].data())['position']['geopoint']
+                .longitude)));
+        allMarkers.add(
+          Marker(
+            point: LatLng(
+                (((widget.initData as dynamic)[4][x].data())['position']
+                        ['geopoint']
+                    .latitude),
+                (((widget.initData as dynamic)[4][x].data())['position']
+                        ['geopoint']
+                    .longitude)),
+            builder: (context) => const Icon(
+              Icons.circle,
+              color: Colors.red,
+              size: 25.0,
+            ),
+          ),
+        );
+      }
+      setState(() {});
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Container();
+    return Container(
+        child: FlutterMap(
+      options: MapOptions(
+        center: LatLng((widget.initData as dynamic)[1].latitude,
+            (widget.initData as dynamic)[1].longitude),
+        zoom: 13.0,
+        onTap: (_) => _popupLayerController.hidePopup(),
+      ),
+      children: [
+        TileLayerWidget(
+          options: TileLayerOptions(
+              urlTemplate: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+              subdomains: ['a', 'b', 'c']),
+        ),
+        PopupMarkerLayerWidget(
+          options: PopupMarkerLayerOptions(
+            markers: allMarkers,
+            popupSnap: widget.snap,
+            popupController: _popupLayerController,
+            popupBuilder: (BuildContext context, Marker marker) =>
+                markerPopupMsg(widget.initData, marker, hashMarkers),
+            markerRotate: widget.rotate,
+            markerRotateAlignment: PopupMarkerLayerOptions.rotationAlignmentFor(
+              widget.markerAnchorAlign,
+            ),
+            popupAnimation: widget.fade
+                ? PopupAnimation.fade(duration: Duration(milliseconds: 700))
+                : null,
+          ),
+        ),
+      ],
+    ));
   }
 }
 
 class Blue extends StatefulWidget {
+  final Object? initData;
+  Blue({Key? key, required this.initData}) : super(key: key);
   @override
   _BlueState createState() => _BlueState();
 }
@@ -136,16 +333,47 @@ class _BlueState extends State<Blue> {
                     child: Stack(children: [
                       Container(
                         width: double.infinity,
-                        child: Image(
-                          fit: BoxFit.fitWidth,
-                          image: AssetImage('assets/placeholder_map.png'),
-                        ),
+                        child: LayoutBuilder(builder: (context, constraints) {
+                          return // create function here to adapt to the parent widget's constraints
+                              CachedNetworkImage(
+                            imageUrl:
+                                'https://api.mapbox.com/styles/v1/mapbox/streets-v11/static/pin-s+f74e4e(' +
+                                    (widget.initData as dynamic)[0]['position']
+                                            ['geopoint']
+                                        .longitude
+                                        .toString() +
+                                    ',' +
+                                    ((widget.initData as dynamic)[0]['position']
+                                            ['geopoint']
+                                        .latitude
+                                        .toString()) +
+                                    '),pin-s-home+555555(' +
+                                    (widget.initData as dynamic)[1]
+                                        .longitude
+                                        .toString() +
+                                    ',' +
+                                    ((widget.initData as dynamic)[1]
+                                        .latitude
+                                        .toString()) +
+                                    '/auto/' +
+                                    (constraints.maxWidth * 0.65)
+                                        .floor()
+                                        .toString() +
+                                    'x' +
+                                    (constraints.maxHeight * 0.65)
+                                        .floor()
+                                        .toString() +
+                                    '@2x?access_token=' +
+                                    dotenv.env['MAPBOX_TOKEN'].toString(),
+                            fit: BoxFit.contain,
+                          );
+                        }),
                       ),
                       Container(
-                        alignment: Alignment.topRight,
+                        alignment: Alignment.topLeft,
                         child: Container(
-                          constraints: BoxConstraints(maxWidth: 125),
-                          margin: EdgeInsets.only(top: 10, right: 5),
+                          constraints: BoxConstraints(maxWidth: 200),
+                          margin: EdgeInsets.only(top: 10, left: 5),
                           padding: EdgeInsets.fromLTRB(10, 7, 10, 7),
                           decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(20),
@@ -159,13 +387,14 @@ class _BlueState extends State<Blue> {
                                     Color.fromARGB(155, 157, 75, 239),
                                     Color.fromARGB(158, 38, 146, 192)
                                   ],
-                                  tileMode: TileMode.mirror)),
+                                  tileMode: TileMode.clamp)),
                           child: Row(
                               mainAxisAlignment: MainAxisAlignment.end,
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Icon(Icons.done_outlined),
-                                Text(" Location")
+                                Text(
+                                    "${(widget.initData as dynamic)[2]['words']}")
                               ]),
                         ),
                       ),
@@ -178,7 +407,7 @@ class _BlueState extends State<Blue> {
                   Icons.health_and_safety_outlined,
                   size: 35,
                 ),
-                Text(" Nearest AEDs",
+                Text(" Nearest AED",
                     textAlign: TextAlign.left,
                     style: TextStyle(
                       fontFamily: 'Raleway',
@@ -191,7 +420,7 @@ class _BlueState extends State<Blue> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(40),
           ),
-          margin: EdgeInsets.fromLTRB(40, 30, 40, 10),
+          margin: EdgeInsets.fromLTRB(22, 30, 22, 10),
           child: Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(40),
@@ -203,7 +432,7 @@ class _BlueState extends State<Blue> {
                     Color.fromARGB(137, 240, 132, 34),
                     Color.fromARGB(255, 142, 185, 48),
                   ],
-                  tileMode: TileMode.mirror),
+                  tileMode: TileMode.clamp),
             ),
             child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -211,25 +440,40 @@ class _BlueState extends State<Blue> {
                 children: [
                   Container(
                     margin: EdgeInsets.fromLTRB(20, 10, 0, 0),
-                    child: const ListTile(
-                      title: Text('National HQs',
+                    child: ListTile(
+                      title: Text(
+                          "${((widget.initData as dynamic)[0] as dynamic)['name']}",
                           style: TextStyle(
                             fontFamily: 'Raleway',
                             fontSize: 30,
                           )),
-                      subtitle: Text('2 minutes away.'),
+                      subtitle: Row(children: [
+                        Icon(
+                          Icons.directions_walk_outlined,
+                          size: 17,
+                        ),
+                        Text(
+                            ' ${(widget.initData as dynamic)[3]} minutes away.',
+                            style: TextStyle(
+                              fontSize: 17,
+                            ))
+                      ]),
                     ),
                   ),
                   Stack(children: [
                     Container(
-                      margin: EdgeInsets.fromLTRB(35, 30, 0, 20),
-                      child: Text("36 Pretty Good Street,\nPR33 1CO",
-                          style: TextStyle(
-                            fontFamily: 'KrubLight',
-                            fontSize: 20,
-                          )),
+                      margin: EdgeInsets.fromLTRB(35, 20, 0, 20),
+                      child: Html(
+                          data: ((widget.initData as dynamic)[0]
+                                  as dynamic)['description']
+                              .replaceAll(RegExp('<br />\\s+'), "<br />"),
+                          style: {
+                            "body": Style(
+                                fontSize: FontSize(20),
+                                fontFamily: 'KrubLight'),
+                          }),
                     ),
-                    Container(
+                    /* COULD ADD INFO BUTTON NOT SURE?: Container(
                       margin: EdgeInsets.fromLTRB(0, 50, 10, 10),
                       alignment: Alignment.bottomRight,
                       child: ElevatedButton(
@@ -248,9 +492,9 @@ class _BlueState extends State<Blue> {
                           Icons.info_outline_rounded,
                           size: 25,
                         ),
-                        onPressed: () => {print("hi")},
+                        onPressed: () => {print("Pressed Info")},
                       ),
-                    ),
+                    ), */
                   ]),
                 ]),
           ),
@@ -277,7 +521,7 @@ class _BlueState extends State<Blue> {
                         Color.fromARGB(255, 67, 255, 2),
                         Color.fromARGB(173, 43, 166, 219)
                       ],
-                      tileMode: TileMode.mirror)),
+                      tileMode: TileMode.clamp)),
               child: Container(
                 width: double.infinity,
                 child: ElevatedButton(
