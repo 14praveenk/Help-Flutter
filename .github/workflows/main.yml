@@ -31,7 +31,7 @@ jobs:
           ENV: ${{ secrets.ENV }}
           GOOGLE_SERVICES: ${{ secrets.GOOGLE_SERVICES }}
         run: |
-          echo $FIREBASE_CONFIG >> web/index.html
+          echo $FIREBASE_CONFIG >> web/firebase-config.js
           echo $ENV >> .env
           echo $GOOGLE_SERVICES >> android/app/google-services.json
 
@@ -44,9 +44,3 @@ jobs:
         run: |
           flutter pub get
           flutter build web
-      
-      - name: 🚀 Deploy web to Github Pages
-        uses: JamesIves/github-pages-deploy-action@4.1.3
-        with:
-          branch: gh-pages
-          folder: build/web
