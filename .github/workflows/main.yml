@@ -27,15 +27,15 @@ jobs:
       
       - shell: bash
         env:
-          FIREBASE_CONFIG: ${{ secrets.FIREBASE_CONFIG }}
-          ENV: ${{ secrets.ENV }}
+          FIREBASE_CONFIG: ${{ secrets.FIREBASE_CONFIG_PUBLIC }}
+          ENV: ${{ secrets.ENV_PUBLIC }}
           GOOGLE_SERVICES: ${{ secrets.GOOGLE_SERVICES }}
         run: |
           echo $FIREBASE_CONFIG >> web/firebase-config.js
           echo $ENV >> .env
           echo $GOOGLE_SERVICES >> android/app/google-services.json
 
-      - name: Flutter Setup
+      - name: 🏗️ Flutter Setup
         uses: subosito/flutter-action@v1
         with:
           flutter-version: '2.2.0'  
@@ -44,3 +44,19 @@ jobs:
         run: |
           flutter pub get
           flutter build web
+
+
+      - name: Deploy to Netlify
+        uses: nwtgck/actions-netlify@v1.2
+        with:
+          publish-dir: './build/web'
+          production-branch: master
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          deploy-message: "Deploy from GitHub Actions"
+          enable-pull-request-comment: false
+          enable-commit-comment: true
+          overwrites-pull-request-comment: true
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+        timeout-minutes: 1
