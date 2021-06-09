@@ -3,7 +3,7 @@
   <p align="center">
     An intuitive, simple and powerful PWA with the aim to help save lives.
     <br>
-    <a href="https://help.youthought.co.uk"><strong>Visit Our Demo &raquo;</strong></a>
+    <a href="https://dev.fetchhelp.co.uk"><strong>Visit Our Demo &raquo;</strong></a>
   </p>
 </p>
                   
