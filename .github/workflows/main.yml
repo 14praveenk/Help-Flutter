@@ -26,11 +26,13 @@ jobs:
       - shell: bash
         env:
           FIREBASE_CONFIG: ${{ secrets.FIREBASE_CONFIG_PUBLIC }}
-          ENV: ${{ secrets.ENV_PUBLIC }}
+          W3WKEY: ${{ secrets.W3WKEY }}
+          MAPBOX_TOKEN: ${{ secrets.MAPBOX_TOKEN }}
           GOOGLE_SERVICES: ${{ secrets.GOOGLE_SERVICES }}
         run: |
           echo $FIREBASE_CONFIG >> web/firebase-config.js
-          echo $ENV >> dotenv
+          echo $W3WKEY > dotenv
+          echo $MAPBOX_TOKEN >> dotenv
           echo $GOOGLE_SERVICES >> android/app/google-services.json
 
       - name: 🏗️ Flutter Setup
