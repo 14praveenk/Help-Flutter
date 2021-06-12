@@ -231,7 +231,7 @@ class _RedState extends State<Red> {
             MapboxMap(
                 onMapCreated: _onMapCreated,
                 onStyleLoadedCallback: _onStyleLoadedCallback,
-                accessToken: dotenv.env['MAPBOX_TOKEN'].toString(),
+                accessToken: dotenv.env['MAPBOX_PUBLIC_PUBLIC'].toString(),
                 initialCameraPosition: CameraPosition(
                     zoom: 11,
                     target: mapBox.LatLng(
