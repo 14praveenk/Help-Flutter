@@ -7,12 +7,10 @@ import 'package:flutter_html/flutter_html.dart';
 import 'init.dart';
 import 'splash.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
-import 'package:flutter_map_marker_popup/flutter_map_marker_popup.dart';
-import 'popupMsg.dart';
-import 'package:georange/georange.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:mapbox_gl/mapbox_gl.dart';
+import 'package:mapbox_gl/mapbox_gl.dart' as mapBox;
+import 'package:maps_launcher/maps_launcher.dart';
 
 Future<void> main() async {
   await dotenv.load(fileName: "dotenv");
@@ -39,7 +37,7 @@ class _AppState extends State<App> {
       builder: (context, snapshot) {
         // Check for errors
         if (snapshot.hasError) {
-          return Yellow();
+          return Container();
         }
 
         // Once complete, show your application
@@ -48,7 +46,7 @@ class _AppState extends State<App> {
         }
 
         // Otherwise, show something whilst waiting for initialization to complete
-        return Yellow();
+        return SplashScreen();
       },
     );
   }
@@ -81,53 +79,31 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  static const List<AlignmentGeometry> alignments = [
-    Alignment.centerLeft,
-    Alignment.topCenter,
-    Alignment.centerRight,
-    Alignment.bottomCenter,
-    Alignment.center,
-  ];
+  List<Widget> pageList = [];
   int _selectedIndex = 1;
-  String aedName = "";
   final PageController _pageController = PageController(initialPage: 1);
   @override
   void initState() {
+    pageList.add(Red(initData: widget.initData));
+    pageList.add(Blue(initData: widget.initData));
     super.initState();
     WidgetsBinding.instance!.addPostFrameCallback((_) {});
   }
 
-  bool rotate = true;
-  bool fade = true;
-  bool snapToMarker = true;
-  AlignmentGeometry popupAlignment = alignments[1];
-  AlignmentGeometry anchorAlignment = alignments[1];
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: PageView(
+        physics: new NeverScrollableScrollPhysics(),
         controller: _pageController,
-        children: <Widget>[
-          Red(
-              snap: _popupSnap,
-              rotate: rotate,
-              fade: fade,
-              markerAnchorAlign: _markerAnchorAlign,
-              initData: widget.initData),
-          Blue(initData: widget.initData),
-          Yellow(),
+        children: [
+          IndexedStack(
+            index: _selectedIndex,
+            children: pageList,
+          )
         ],
-        onPageChanged: (page) {
-          setState(() {
-            _selectedIndex = page;
-          });
-        },
       ),
       bottomNavigationBar: ClipRRect(
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(20.0),
-          topRight: Radius.circular(20.0),
-        ),
         child: Container(
           decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -151,7 +127,7 @@ class _MyHomePageState extends State<MyHomePage> {
               setState(() => _selectedIndex = index);
               _pageController.animateToPage(
                 index,
-                duration: const Duration(milliseconds: 400),
+                duration: const Duration(milliseconds: 500),
                 curve: Curves.easeOut,
               );
             },
@@ -170,111 +146,59 @@ class _MyHomePageState extends State<MyHomePage> {
                 title: Text('Home', style: TextStyle(fontFamily: 'Raleway')),
                 textAlign: TextAlign.center,
               ),
-              BottomNavyBarItem(
+              /*BottomNavyBarItem(
                 activeColor: Colors.white70,
                 inactiveColor: Colors.white30,
                 icon: Icon(Icons.settings_outlined),
                 title:
                     Text('Settings', style: TextStyle(fontFamily: 'Raleway')),
                 textAlign: TextAlign.center,
-              ),
+              ),*/
             ],
           ),
         ),
       ),
     );
   }
-
-  AnchorAlign get _markerAnchorAlign {
-    return <AlignmentGeometry, AnchorAlign>{
-      Alignment.centerLeft: AnchorAlign.left,
-      Alignment.topCenter: AnchorAlign.top,
-      Alignment.centerRight: AnchorAlign.right,
-      Alignment.bottomCenter: AnchorAlign.bottom,
-      Alignment.center: AnchorAlign.center,
-    }[anchorAlignment]!;
-  }
-
-  PopupSnap get _popupSnap {
-    if (snapToMarker) {
-      return <AlignmentGeometry, PopupSnap>{
-        Alignment.centerLeft: PopupSnap.markerLeft,
-        Alignment.topCenter: PopupSnap.markerTop,
-        Alignment.centerRight: PopupSnap.markerRight,
-        Alignment.bottomCenter: PopupSnap.markerBottom,
-        Alignment.center: PopupSnap.markerCenter,
-      }[popupAlignment]!;
-    } else {
-      return <AlignmentGeometry, PopupSnap>{
-        Alignment.centerLeft: PopupSnap.mapLeft,
-        Alignment.topCenter: PopupSnap.mapTop,
-        Alignment.centerRight: PopupSnap.mapRight,
-        Alignment.bottomCenter: PopupSnap.mapBottom,
-        Alignment.center: PopupSnap.mapCenter,
-      }[popupAlignment]!;
-    }
-  }
 }
 
 class Red extends StatefulWidget {
   final Object? initData;
-  final PopupSnap snap;
-  final bool rotate;
-  final bool fade;
-  final AnchorAlign markerAnchorAlign;
-  Red(
-      {Key? key,
-      required this.snap,
-      required this.rotate,
-      required this.fade,
-      required this.markerAnchorAlign,
-      required this.initData})
-      : super(key: key);
+  Red({Key? key, required this.initData}) : super(key: key);
   @override
   _RedState createState() => _RedState();
 }
 
 class _RedState extends State<Red> {
-  List<Marker> allMarkers = [];
-  List<String> hashMarkers = [];
-  final PopupController _popupLayerController = PopupController();
-  @override
-  void initState() {
-    super.initState();
-    Future.microtask(() {
-      var r = (widget.initData as dynamic)[4].length;
-      for (var x = 0; x < r; x++) {
-        GeoRange georange = GeoRange();
-        hashMarkers.add(georange.encode(
-            ((widget.initData as dynamic)[4][x].data())['position']['geopoint']
-                .latitude,
-            (((widget.initData as dynamic)[4][x].data())['position']['geopoint']
-                .longitude)));
-        allMarkers.add(
-          Marker(
-            point: LatLng(
-                (((widget.initData as dynamic)[4][x].data())['position']
-                        ['geopoint']
-                    .latitude),
-                (((widget.initData as dynamic)[4][x].data())['position']
-                        ['geopoint']
-                    .longitude)),
-            builder: (context) => const Icon(
-              Icons.circle,
-              color: Colors.red,
-              size: 25.0,
-            ),
-          ),
-        );
-      }
-      setState(() {});
-    });
+  late MapboxMapController controller;
+  void _onMapCreated(MapboxMapController controller) {
+    this.controller = controller;
+    controller.setTelemetryEnabled(false);
+  }
+
+  void _onStyleLoadedCallback() {
+    var r = (widget.initData as dynamic)[4].length;
+    for (var x = 0; x < r; x++) {
+      controller.addCircle(
+        CircleOptions(
+            geometry: LatLng(
+                (widget.initData as dynamic)[4][x]
+                    .data()['position']['geopoint']
+                    .latitude,
+                (widget.initData as dynamic)[4][x]
+                    .data()['position']['geopoint']
+                    .longitude),
+            circleColor: "#FF0000",
+            circleRadius: 6),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Container(
-        child: FlutterMap(
+        child:
+            /*FlutterMap(
       options: MapOptions(
         center: LatLng((widget.initData as dynamic)[1].latitude,
             (widget.initData as dynamic)[1].longitude),
@@ -303,8 +227,16 @@ class _RedState extends State<Red> {
                 : null,
           ),
         ),
-      ],
-    ));
+      ],*/
+            MapboxMap(
+                onMapCreated: _onMapCreated,
+                onStyleLoadedCallback: _onStyleLoadedCallback,
+                accessToken: dotenv.env['MAPBOX_TOKEN'].toString(),
+                initialCameraPosition: CameraPosition(
+                    zoom: 11,
+                    target: mapBox.LatLng(
+                        (widget.initData as dynamic)[1].latitude,
+                        (widget.initData as dynamic)[1].longitude))));
   }
 }
 
@@ -384,8 +316,10 @@ class _BlueState extends State<Blue> {
                                       7.0714286847386845),
                                   stops: [0, 0.7713881134986877],
                                   colors: [
-                                    Color.fromARGB(155, 157, 75, 239),
+                                    Color.fromARGB(155, 157, 75, 239)
+                                        .withOpacity(0.9),
                                     Color.fromARGB(158, 38, 146, 192)
+                                        .withOpacity(0.93),
                                   ],
                                   tileMode: TileMode.clamp)),
                           child: Row(
@@ -394,7 +328,9 @@ class _BlueState extends State<Blue> {
                               children: [
                                 Icon(Icons.done_outlined),
                                 Text(
-                                    "${(widget.initData as dynamic)[2]['words']}")
+                                  "${(widget.initData as dynamic)[2]['words']}",
+                                  style: TextStyle(color: Colors.black),
+                                )
                               ]),
                         ),
                       ),
@@ -418,12 +354,12 @@ class _BlueState extends State<Blue> {
         Card(
           elevation: 20,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(40),
+            borderRadius: BorderRadius.circular(20),
           ),
           margin: EdgeInsets.fromLTRB(22, 30, 22, 10),
           child: Container(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(40),
+              borderRadius: BorderRadius.circular(20),
               gradient: LinearGradient(
                   begin: Alignment(0.0010858093046581807, -1.0000000648203722),
                   end: Alignment(-2.331161696029882, 2.34839945076237),
@@ -462,7 +398,7 @@ class _BlueState extends State<Blue> {
                   ),
                   Stack(children: [
                     Container(
-                      margin: EdgeInsets.fromLTRB(35, 20, 0, 20),
+                      margin: EdgeInsets.fromLTRB(35, 20, 35, 20),
                       child: Html(
                           data: ((widget.initData as dynamic)[0]
                                   as dynamic)['description']
@@ -503,7 +439,7 @@ class _BlueState extends State<Blue> {
           margin: EdgeInsets.fromLTRB(20, 50, 20, 0),
           child: DecoratedBox(
               decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(15),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.grey.withOpacity(0.5),
@@ -525,18 +461,24 @@ class _BlueState extends State<Blue> {
               child: Container(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    MapsLauncher.launchCoordinates(
+                        (widget.initData as dynamic)[0]['position']['geopoint']
+                            .latitude,
+                        (widget.initData as dynamic)[0]['position']['geopoint']
+                            .longitude);
+                  },
                   style: ButtonStyle(
                     shape: MaterialStateProperty.all<RoundedRectangleBorder>(
                       RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20)),
+                          borderRadius: BorderRadius.circular(15)),
                     ),
                     elevation: MaterialStateProperty.all(0),
                     foregroundColor: MaterialStateProperty.all(Colors.black),
                     backgroundColor:
                         MaterialStateProperty.all(Colors.transparent),
                     padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
-                      EdgeInsets.all(30),
+                      EdgeInsets.all(27),
                     ),
                   ),
                   child: Text(
@@ -555,7 +497,7 @@ class _BlueState extends State<Blue> {
   }
 }
 
-class Yellow extends StatefulWidget {
+/*class Yellow extends StatefulWidget {
   @override
   _YellowState createState() => _YellowState();
 }
@@ -566,3 +508,4 @@ class _YellowState extends State<Yellow> {
     return Container();
   }
 }
+*/
