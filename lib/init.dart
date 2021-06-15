@@ -86,16 +86,17 @@ class Init {
     var closestDist = 10000;
     var closestIndex = -1;
     var closestsIndexs = [];
-    for (var i = 0; i < data.length; i++) {
+    for (var x = 0; x < data.length; x++) {
       final Distance distance = new Distance();
       final int distanceToAED = distance(
               LatLng(currentPosition.latitude, currentPosition.longitude),
-              LatLng(data[i]['Latitude'], data[i]['Longitude']))
-          .floor();
+              LatLng(double.parse(data[x]['Latitude'].toString()),
+                  double.parse(data[x]['Longitude'].toString())))
+          .toInt();
       if (distanceToAED < closestDist) {
         closestDist = distanceToAED;
         closestsIndexs.add(closestIndex);
-        closestIndex = i;
+        closestIndex = x;
       }
     }
     closestsIndexs.add(closestIndex);
