@@ -8,16 +8,18 @@ import 'package:what3words/what3words.dart' as w3w;
 import 'package:http/http.dart' as http;
 import 'dart:convert' as convert;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:hive/hive.dart';
+import 'package:latlong2/latlong.dart';
 
 class Init {
   String aname = "";
   var api = What3WordsV3(dotenv.env['W3WKEY'].toString());
   Future initialize() async {
-    LocationData currentPosition = await _determinePosition();
+    LatLng currentPosition = await whatToDo();
     // Create and execute a request to obtain a grid section within the provided bounding box
     var coordinates = await api
         .convertTo3wa(w3w.Coordinates(
-            currentPosition.latitude!, currentPosition.longitude!))
+            currentPosition.latitude, currentPosition.longitude))
         .execute();
 
     if (coordinates.isSuccessful()) {
@@ -64,6 +66,21 @@ class Init {
     ];
   }
 
+  Future whatToDo() async {
+    var box = Hive.box('settings');
+    var option = box.get('useGNSS');
+    if (option == false) {
+      var customLoc = box.get('cusLocCoords');
+      return (LatLng(customLoc[1], customLoc[0]));
+    } else {
+      print("hi");
+      LocationData currentPosition = await _determinePosition();
+
+      return LatLng(currentPosition.latitude!.toDouble(),
+          currentPosition.longitude!.toDouble());
+    }
+  }
+
   Future<List<DocumentSnapshot<Object?>>> _registerServices(
       currentPosition) async {
     print("Starting registering services");
@@ -104,6 +121,11 @@ class Init {
       if (_permissionGranted != PermissionStatus.granted) {
         return Future.error("Not granted");
       }
+    }
+    if (_permissionGranted == PermissionStatus.deniedForever) {
+      var box = Hive.box('settings');
+      box.put("welcome_shown", false);
+      return Future.error("Not granted");
     }
 
     return await location.getLocation();

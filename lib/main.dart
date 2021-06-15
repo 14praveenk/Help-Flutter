@@ -11,10 +11,15 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:mapbox_gl/mapbox_gl.dart';
 import 'package:mapbox_gl/mapbox_gl.dart' as mapBox;
 import 'package:maps_launcher/maps_launcher.dart';
+import 'package:hive/hive.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'welcome.dart';
 
 Future<void> main() async {
   await dotenv.load(fileName: "dotenv");
   WidgetsFlutterBinding.ensureInitialized();
+  await Hive.initFlutter();
+  await Hive.openBox('settings');
   runApp(App());
 }
 
@@ -25,49 +30,53 @@ class App extends StatefulWidget {
 }
 
 class _AppState extends State<App> {
-  /// The future is part of the state of our widget. We should not call `initializeApp`
-  /// directly inside [build].
-  final Future<FirebaseApp> _initialization = Firebase.initializeApp();
-
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
-      // Initialize FlutterFire:
-      future: _initialization,
-      builder: (context, snapshot) {
-        // Check for errors
-        if (snapshot.hasError) {
-          return Container();
-        }
-
-        // Once complete, show your application
-        if (snapshot.connectionState == ConnectionState.done) {
-          return MyApp();
-        }
-
-        // Otherwise, show something whilst waiting for initialization to complete
-        return SplashScreen();
-      },
-    );
+    return MyApp();
   }
 }
 
 class MyApp extends StatelessWidget {
+  /// The future is part of the state of our widget. We should not call `initializeApp`
+  /// directly inside [build].
+  final Future<FirebaseApp> _initialization = Firebase.initializeApp();
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Help',
-      home: FutureBuilder(
-        future: Init().initialize(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.done) {
-            return SafeArea(child: MyHomePage(initData: snapshot.data));
-          } else {
-            return SplashScreen();
-          }
-        },
-      ),
-    );
+        title: 'Help',
+        home: ValueListenableBuilder(
+            valueListenable: Hive.box('settings').listenable(),
+            builder: (context, box, child) => (box as dynamic)
+                    .get('welcome_shown', defaultValue: false)
+                ? FutureBuilder(
+                    // Initialize FlutterFire:
+                    future: _initialization,
+                    builder: (context, snapshot) {
+                      // Check for errors
+                      if (snapshot.hasError) {
+                        return Container();
+                      }
+
+                      // Once complete, show your application
+                      if (snapshot.connectionState == ConnectionState.done) {
+                        return FutureBuilder(
+                          future: Init().initialize(),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.done) {
+                              return SafeArea(
+                                  child: MyHomePage(initData: snapshot.data));
+                            } else {
+                              return SplashScreen();
+                            }
+                          },
+                        );
+                      }
+
+                      // Otherwise, show something whilst waiting for initialization to complete
+                      return SplashScreen();
+                    })
+                : WelcomeScreen()));
   }
 }
 

@@ -4,6 +4,8 @@ class SplashScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
+        child: Directionality(
+      textDirection: TextDirection.ltr,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
@@ -16,6 +18,6 @@ class SplashScreen extends StatelessWidget {
           ),
         ],
       ),
-    );
+    ));
   }
 }

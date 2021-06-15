@@ -134,6 +134,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.0.3"
+  dots_indicator:
+    dependency: transitive
+    description:
+      name: dots_indicator
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "2.0.0"
   fake_async:
     dependency: transitive
     description:
@@ -216,6 +223,27 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "2.0.0"
+  flutter_keyboard_visibility:
+    dependency: transitive
+    description:
+      name: flutter_keyboard_visibility
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "5.0.2"
+  flutter_keyboard_visibility_platform_interface:
+    dependency: transitive
+    description:
+      name: flutter_keyboard_visibility_platform_interface
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "2.0.0"
+  flutter_keyboard_visibility_web:
+    dependency: transitive
+    description:
+      name: flutter_keyboard_visibility_web
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "2.0.0"
   flutter_layout_grid:
     dependency: transitive
     description:
@@ -256,11 +284,25 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  flutter_typeahead:
+    dependency: "direct overridden"
+    description:
+      name: flutter_typeahead
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "3.1.3"
   flutter_web_plugins:
     dependency: transitive
     description: flutter
     source: sdk
     version: "0.0.0"
+  geocode:
+    dependency: "direct main"
+    description:
+      name: geocode
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "1.0.1"
   geoflutterfire2:
     dependency: "direct main"
     description:
@@ -272,6 +314,20 @@ packages:
     dependency: "direct main"
     description:
       name: georange
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "1.0.0"
+  hive:
+    dependency: "direct overridden"
+    description:
+      name: hive
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "2.0.4"
+  hive_flutter:
+    dependency: "direct overridden"
+    description:
+      name: hive_flutter
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.0.0"
@@ -310,6 +366,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.17.0"
+  introduction_screen:
+    dependency: "direct overridden"
+    description:
+      name: introduction_screen
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "2.1.0"
   js:
     dependency: "direct main"
     description:
@@ -393,6 +456,13 @@ packages:
       url: "https://github.com/tobrun/flutter-mapbox-gl.git"
     source: git
     version: "0.12.0"
+  mapbox_search:
+    dependency: "direct overridden"
+    description:
+      name: mapbox_search
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "3.0.0-nullsafety.0"
   maps_launcher:
     dependency: "direct overridden"
     description:
