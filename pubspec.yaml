@@ -28,9 +28,6 @@ dependencies:
   cupertino_icons: ^1.0.2
   floating_bottom_navigation_bar: ^1.5.1
   bottom_navy_bar: ^6.0.0
-  firebase_core: ^1.2.0
-  cloud_firestore: ^2.2.0
-  geoflutterfire2: ^2.3.6
   flutter_html: ^2.0.0
   location: ^4.2.3
   cached_network_image: ^3.0.0

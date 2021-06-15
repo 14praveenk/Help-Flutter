@@ -1,5 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:geoflutterfire2/geoflutterfire2.dart';
+import 'package:flutter/services.dart';
 import 'package:location/location.dart';
 import 'package:location/location.dart' as loc;
 import 'dart:async';
@@ -47,22 +46,19 @@ class Init {
             "," +
             currentPosition.latitude.toString() +
             ";" +
-            (setup[0].data() as dynamic)['position']['geopoint']
-                .longitude
-                .toString() +
+            (setup[0]['Longitude']).toString() +
             "," +
-            (setup[0].data() as dynamic)['position']['geopoint']
-                .latitude
-                .toString() +
+            (setup[0]['Latitude']).toString() +
             "?sources=0&destinations=1&annotations=duration&access_token=" +
             dotenv.env['MAPBOX_TOKEN'].toString()));
     var duration = (convert.jsonDecode(response.body) as Map<String, dynamic>);
     return [
-      (setup[0].data()),
+      (setup[0]),
       currentPosition,
       coordinates.data()?.toJson(),
       ((duration['durations'][0][0] / 60).floor()),
-      (setup)
+      (setup[1]),
+      (setup[2]),
     ];
   }
 
@@ -73,7 +69,6 @@ class Init {
       var customLoc = box.get('cusLocCoords');
       return (LatLng(customLoc[1], customLoc[0]));
     } else {
-      print("hi");
       LocationData currentPosition = await _determinePosition();
 
       return LatLng(currentPosition.latitude!.toDouble(),
@@ -81,23 +76,30 @@ class Init {
     }
   }
 
-  Future<List<DocumentSnapshot<Object?>>> _registerServices(
-      currentPosition) async {
-    print("Starting registering services");
-    final _firestore = FirebaseFirestore.instance;
-    GeoFlutterFire geo = GeoFlutterFire();
-    GeoFirePoint center = geo.point(
-        latitude: currentPosition.latitude,
-        longitude: currentPosition.longitude);
-    var collectionReference = _firestore.collection('AEDs');
+  Future _registerServices(currentPosition) async {
+    print("Started registering services");
 
     double radius = 10;
     String field = 'position';
-
-    return geo
-        .collection(collectionRef: collectionReference)
-        .within(center: center, radius: radius, field: field, strictMode: false)
-        .first;
+    final String response = await rootBundle.loadString('aedlocs.json');
+    final data = await convert.json.decode(response);
+    var closestDist = 10000;
+    var closestIndex = -1;
+    var closestsIndexs = [];
+    for (var i = 0; i < data.length; i++) {
+      final Distance distance = new Distance();
+      final int distanceToAED = distance(
+              LatLng(currentPosition.latitude, currentPosition.longitude),
+              LatLng(data[i]['Latitude'], data[i]['Longitude']))
+          .floor();
+      if (distanceToAED < closestDist) {
+        closestDist = distanceToAED;
+        closestsIndexs.add(closestIndex);
+        closestIndex = i;
+      }
+    }
+    closestsIndexs.add(closestIndex);
+    return [data[closestIndex], data, closestsIndexs];
   }
 
   Future<loc.LocationData> _determinePosition() async {

@@ -68,7 +68,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
       MaterialPageRoute(builder: (context) => customLocationScreen()),
     ).then((value) {
       if (value == true) {
-        print("Got here");
         hideAllButton();
       }
     });
@@ -114,7 +113,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
         child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.only(top: 16, left: 16),
-            child: Text("Help - Debug Release"),
+            child: Text("Help - Alpha Release"),
           ),
         ),
       ),
@@ -169,16 +168,12 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                       PermissionStatus _permissionGranted;
                       LocationData _locationData;
                       _serviceEnabled = await location.serviceEnabled();
-                      print(_serviceEnabled);
                       if (!_serviceEnabled) {
                         _serviceEnabled = await location.requestService();
-                        if (!_serviceEnabled) {
-                          print("Not granted");
-                        }
+                        if (!_serviceEnabled) {}
                       }
 
                       _permissionGranted = await location.hasPermission();
-                      print(_permissionGranted);
                       if (_permissionGranted == PermissionStatus.denied) {
                         _permissionGranted = await location.requestPermission();
                         if (_permissionGranted != PermissionStatus.granted) {

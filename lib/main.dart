@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:bottom_navy_bar/bottom_navy_bar.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'init.dart';
 import 'splash.dart';
@@ -37,9 +36,6 @@ class _AppState extends State<App> {
 }
 
 class MyApp extends StatelessWidget {
-  /// The future is part of the state of our widget. We should not call `initializeApp`
-  /// directly inside [build].
-  final Future<FirebaseApp> _initialization = Firebase.initializeApp();
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -49,32 +45,14 @@ class MyApp extends StatelessWidget {
             builder: (context, box, child) => (box as dynamic)
                     .get('welcome_shown', defaultValue: false)
                 ? FutureBuilder(
-                    // Initialize FlutterFire:
-                    future: _initialization,
+                    future: Init().initialize(),
                     builder: (context, snapshot) {
-                      // Check for errors
-                      if (snapshot.hasError) {
-                        return Container();
-                      }
-
-                      // Once complete, show your application
                       if (snapshot.connectionState == ConnectionState.done) {
-                        return FutureBuilder(
-                          future: Init().initialize(),
-                          builder: (context, snapshot) {
-                            if (snapshot.connectionState ==
-                                ConnectionState.done) {
-                              return SafeArea(
-                                  child: MyHomePage(initData: snapshot.data));
-                            } else {
-                              return SplashScreen();
-                            }
-                          },
-                        );
+                        return SafeArea(
+                            child: MyHomePage(initData: snapshot.data));
+                      } else {
+                        return SplashScreen();
                       }
-
-                      // Otherwise, show something whilst waiting for initialization to complete
-                      return SplashScreen();
                     })
                 : WelcomeScreen()));
   }
@@ -186,17 +164,14 @@ class _RedState extends State<Red> {
   }
 
   void _onStyleLoadedCallback() {
-    var r = (widget.initData as dynamic)[4].length;
+    var r = ((widget.initData as dynamic)[5].length - 1);
+    print(r);
     for (var x = 0; x < r; x++) {
+      int q = (widget.initData as dynamic)[5][(x + 1)];
       controller.addCircle(
         CircleOptions(
-            geometry: LatLng(
-                (widget.initData as dynamic)[4][x]
-                    .data()['position']['geopoint']
-                    .latitude,
-                (widget.initData as dynamic)[4][x]
-                    .data()['position']['geopoint']
-                    .longitude),
+            geometry: LatLng((widget.initData as dynamic)[4][q]['Latitude'],
+                (widget.initData as dynamic)[4][q]['Longitude']),
             circleColor: "#FF0000",
             circleRadius: 6),
       );
@@ -279,14 +254,11 @@ class _BlueState extends State<Blue> {
                               CachedNetworkImage(
                             imageUrl:
                                 'https://api.mapbox.com/styles/v1/mapbox/streets-v11/static/pin-s+f74e4e(' +
-                                    (widget.initData as dynamic)[0]['position']
-                                            ['geopoint']
-                                        .longitude
+                                    (widget.initData as dynamic)[0]['Longitude']
                                         .toString() +
                                     ',' +
-                                    ((widget.initData as dynamic)[0]['position']
-                                            ['geopoint']
-                                        .latitude
+                                    ((widget.initData as dynamic)[0]
+                                            ['Latitude']
                                         .toString()) +
                                     '),pin-s-home+555555(' +
                                     (widget.initData as dynamic)[1]
@@ -387,7 +359,7 @@ class _BlueState extends State<Blue> {
                     margin: EdgeInsets.fromLTRB(20, 10, 0, 0),
                     child: ListTile(
                       title: Text(
-                          "${((widget.initData as dynamic)[0] as dynamic)['name']}",
+                          "${((widget.initData as dynamic)[0] as dynamic)['Name']}",
                           style: TextStyle(
                             fontFamily: 'Raleway',
                             fontSize: 30,
@@ -410,7 +382,7 @@ class _BlueState extends State<Blue> {
                       margin: EdgeInsets.fromLTRB(35, 20, 35, 20),
                       child: Html(
                           data: ((widget.initData as dynamic)[0]
-                                  as dynamic)['description']
+                                  as dynamic)['Description']
                               .replaceAll(RegExp('<br />\\s+'), "<br />"),
                           style: {
                             "body": Style(

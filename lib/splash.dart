@@ -10,7 +10,7 @@ class SplashScreen extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
           Text(
-            "Help - Debug Release",
+            "Help - Alpha Release",
             style: TextStyle(
               fontSize: 32,
               fontWeight: FontWeight.bold,
