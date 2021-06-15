@@ -81,7 +81,7 @@ class Init {
 
     double radius = 10;
     String field = 'position';
-    final String response = await rootBundle.loadString('aedlocs.json');
+    final String response = await rootBundle.loadString('assets/aedlocs.json');
     final data = await convert.json.decode(response);
     var closestDist = 10000;
     var closestIndex = -1;
