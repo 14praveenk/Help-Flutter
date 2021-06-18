@@ -89,15 +89,29 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const bodyStyle = TextStyle(fontSize: 19.0, fontFamily: 'KrubLight');
-    const titleStyle = TextStyle(
-        fontSize: 28.0, fontFamily: 'Raleway', fontWeight: FontWeight.w700);
-    const pageDecoration = const PageDecoration(
+    var bodyStyle = TextStyle(
+      fontSize: 19.0,
+      fontFamily: 'KrubLight',
+      color: Theme.of(context).brightness == Brightness.light
+          ? Colors.black
+          : Colors.white,
+    );
+    var titleStyle = TextStyle(
+      fontSize: 28.0,
+      fontFamily: 'Raleway',
+      fontWeight: FontWeight.w700,
+      color: Theme.of(context).brightness == Brightness.light
+          ? Colors.black
+          : Colors.white,
+    );
+    var pageDecoration = PageDecoration(
       titleTextStyle: TextStyle(
           fontSize: 28.0, fontFamily: 'Raleway', fontWeight: FontWeight.w700),
       bodyTextStyle: bodyStyle,
       descriptionPadding: EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 16.0),
-      pageColor: Colors.white,
+      pageColor: Theme.of(context).brightness == Brightness.light
+          ? Colors.white
+          : Colors.black87,
       titlePadding: EdgeInsets.zero,
       imagePadding: EdgeInsets.zero,
       imageAlignment: Alignment.center,
@@ -107,7 +121,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     return Material(
         child: IntroductionScreen(
       key: introKey,
-      globalBackgroundColor: Colors.white,
+      globalBackgroundColor: Theme.of(context).brightness == Brightness.light
+          ? Colors.white
+          : Colors.black87,
       globalHeader: Align(
         alignment: Alignment.topLeft,
         child: SafeArea(
@@ -230,8 +246,10 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
           borderRadius: BorderRadius.all(Radius.circular(25.0)),
         ),
       ),
-      dotsContainerDecorator: const ShapeDecoration(
-        color: Colors.black87,
+      dotsContainerDecorator: ShapeDecoration(
+        color: Theme.of(context).brightness == Brightness.light
+            ? Colors.black87
+            : Colors.white30,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(8.0)),
         ),

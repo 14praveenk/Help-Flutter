@@ -138,7 +138,9 @@ class _customLocationScreenState extends State<customLocationScreen>
 
   BoxDecoration _containerDecoration() {
     return BoxDecoration(
-      color: Colors.white,
+      color: Theme.of(context).brightness == Brightness.light
+          ? Colors.white
+          : Colors.black87,
       borderRadius: BorderRadius.all(Radius.circular(6.0)),
       boxShadow: [
         BoxShadow(color: Colors.black, blurRadius: 0, spreadRadius: 0)

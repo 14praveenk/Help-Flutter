@@ -68,7 +68,11 @@ class MyApp extends StatelessWidget {
                         return SafeArea(
                             child: MyHomePage(initData: snapshot.data));
                       } else {
-                        return Container();
+                        return Container(
+                            color:
+                                Theme.of(context).brightness == Brightness.light
+                                    ? Colors.white
+                                    : Colors.black87);
                       }
                     })
                 : WelcomeScreen()));
