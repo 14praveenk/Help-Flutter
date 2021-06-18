@@ -13,13 +13,22 @@ import 'package:maps_launcher/maps_launcher.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'welcome.dart';
+import 'package:flutter/widgets.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
+import 'package:google_nav_bar/google_nav_bar.dart';
 
 Future<void> main() async {
   await dotenv.load(fileName: "dotenv");
   WidgetsFlutterBinding.ensureInitialized();
   await Hive.initFlutter();
   await Hive.openBox('settings');
-  runApp(App());
+  await SentryFlutter.init(
+    (options) {
+      options.dsn =
+          'https://74695678b2ad4ed488ee3546716682dd@o863841.ingest.sentry.io/5822329';
+    },
+    appRunner: () => runApp(App()),
+  );
 }
 
 class App extends StatefulWidget {
@@ -40,6 +49,14 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
         title: 'Help',
+        theme: ThemeData(
+          brightness: Brightness.light,
+          primaryColor: Colors.black,
+        ),
+        darkTheme: ThemeData(
+            scaffoldBackgroundColor: Colors.black87,
+            primaryColor: Colors.white,
+            brightness: Brightness.dark),
         home: ValueListenableBuilder(
             valueListenable: Hive.box('settings').listenable(),
             builder: (context, box, child) => (box as dynamic)
@@ -51,7 +68,7 @@ class MyApp extends StatelessWidget {
                         return SafeArea(
                             child: MyHomePage(initData: snapshot.data));
                       } else {
-                        return SplashScreen();
+                        return Container();
                       }
                     })
                 : WelcomeScreen()));
@@ -80,72 +97,76 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: PageView(
-        physics: new NeverScrollableScrollPhysics(),
-        controller: _pageController,
-        children: [
-          IndexedStack(
-            index: _selectedIndex,
-            children: pageList,
-          )
-        ],
-      ),
-      bottomNavigationBar: ClipRRect(
-        child: Container(
-          decoration: BoxDecoration(
-              gradient: LinearGradient(
-                  begin: Alignment(-1.0120371718436161e-7, -1.0000000017898854),
-                  end: Alignment(-0.0009034435046230138, 0.6979166228607521),
-                  stops: [0, 0.00009999999747378752, 0.00019999999494757503, 1],
-                  colors: [
-                    Color.fromARGB(255, 106, 78, 166),
-                    Color.fromARGB(0, 70, 140, 222),
-                    Color.fromARGB(252, 62, 120, 189),
-                    Color.fromARGB(255, 91, 104, 226)
-                  ],
-                  tileMode: TileMode.mirror)),
-          child: BottomNavyBar(
-            backgroundColor: Colors.transparent,
-            selectedIndex: _selectedIndex,
-            showElevation: true,
-            itemCornerRadius: 24,
-            curve: Curves.easeIn,
-            onItemSelected: (index) {
-              setState(() => _selectedIndex = index);
-              _pageController.animateToPage(
-                index,
-                duration: const Duration(milliseconds: 500),
-                curve: Curves.easeOut,
-              );
-            },
-            items: <BottomNavyBarItem>[
-              BottomNavyBarItem(
-                activeColor: Colors.white70,
-                inactiveColor: Colors.white30,
-                icon: Icon(Icons.map_outlined),
-                title: Text('Map', style: TextStyle(fontFamily: 'Raleway')),
-                textAlign: TextAlign.center,
-              ),
-              BottomNavyBarItem(
-                activeColor: Colors.white70,
-                inactiveColor: Colors.white30,
-                icon: Icon(Icons.home_outlined),
-                title: Text('Home', style: TextStyle(fontFamily: 'Raleway')),
-                textAlign: TextAlign.center,
-              ),
-              /*BottomNavyBarItem(
-                activeColor: Colors.white70,
-                inactiveColor: Colors.white30,
-                icon: Icon(Icons.settings_outlined),
-                title:
-                    Text('Settings', style: TextStyle(fontFamily: 'Raleway')),
-                textAlign: TextAlign.center,
-              ),*/
-            ],
-          ),
+        body: PageView(
+          physics: new NeverScrollableScrollPhysics(),
+          controller: _pageController,
+          children: [
+            IndexedStack(
+              index: _selectedIndex,
+              children: pageList,
+            )
+          ],
         ),
-      ),
-    );
+        bottomNavigationBar: Container(
+            decoration: BoxDecoration(
+              color: Theme.of(context).brightness == Brightness.light
+                  ? Colors.white
+                  : Colors.grey[850],
+              boxShadow: [
+                BoxShadow(
+                  blurRadius: 20,
+                  color: Colors.black.withOpacity(.1),
+                )
+              ],
+            ),
+            child: GNav(
+              rippleColor: Theme.of(context).brightness == Brightness.light
+                  ? Colors.grey[300]!
+                  : Colors.black38,
+              hoverColor: Theme.of(context).brightness == Brightness.light
+                  ? Colors.grey[100]!
+                  : Colors.black38,
+              gap: 8,
+              activeColor: Theme.of(context).brightness == Brightness.light
+                  ? Colors.black
+                  : Colors.white,
+              iconSize: 24,
+              padding: EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+              duration: Duration(milliseconds: 400),
+              tabBackgroundColor:
+                  Theme.of(context).brightness == Brightness.light
+                      ? Colors.grey[100]!
+                      : Colors.black12,
+              color: Colors.black,
+              tabs: [
+                GButton(
+                  icon: Icons.map_outlined,
+                  text: 'Map',
+                  iconColor: Theme.of(context).brightness == Brightness.light
+                      ? Colors.black
+                      : Colors.white,
+                  textColor: Theme.of(context).brightness == Brightness.light
+                      ? Colors.black
+                      : Colors.white,
+                ),
+                GButton(
+                  icon: Icons.home_outlined,
+                  text: 'Home',
+                  iconColor: Theme.of(context).brightness == Brightness.light
+                      ? Colors.black
+                      : Colors.white,
+                  textColor: Theme.of(context).brightness == Brightness.light
+                      ? Colors.black
+                      : Colors.white,
+                ),
+              ],
+              selectedIndex: _selectedIndex,
+              onTabChange: (index) {
+                setState(() {
+                  _selectedIndex = index;
+                });
+              },
+            )));
   }
 }
 
@@ -216,6 +237,9 @@ class _RedState extends State<Red> {
                 onMapCreated: _onMapCreated,
                 onStyleLoadedCallback: _onStyleLoadedCallback,
                 accessToken: dotenv.env['MAPBOX_PUBLIC_PUBLIC'].toString(),
+                styleString: Theme.of(context).brightness == Brightness.dark
+                    ? "mapbox://styles/mapbox/dark-v10"
+                    : "mapbox://styles/mapbox/streets-v11",
                 initialCameraPosition: CameraPosition(
                     zoom: 11,
                     target: mapBox.LatLng(
@@ -242,91 +266,107 @@ class _BlueState extends State<Blue> {
                 margin: EdgeInsets.only(
                   bottom: 30,
                 ),
-                child: FractionallySizedBox(
-                    alignment: Alignment.topLeft,
-                    heightFactor: 0.7,
-                    widthFactor: 1,
-                    child: Stack(children: [
-                      Container(
-                        width: double.infinity,
-                        child: LayoutBuilder(builder: (context, constraints) {
-                          return // create function here to adapt to the parent widget's constraints
-                              CachedNetworkImage(
-                            imageUrl:
-                                'https://api.mapbox.com/styles/v1/mapbox/streets-v11/static/pin-s+f74e4e(' +
-                                    (widget.initData as dynamic)[0]['Longitude']
-                                        .toString() +
-                                    ',' +
-                                    ((widget.initData as dynamic)[0]
-                                            ['Latitude']
-                                        .toString()) +
-                                    '),pin-s-home+555555(' +
-                                    (widget.initData as dynamic)[1]
-                                        .longitude
-                                        .toString() +
-                                    ',' +
-                                    ((widget.initData as dynamic)[1]
-                                        .latitude
-                                        .toString()) +
-                                    '/auto/' +
-                                    (constraints.maxWidth * 0.65)
-                                        .floor()
-                                        .toString() +
-                                    'x' +
-                                    (constraints.maxHeight * 0.65)
-                                        .floor()
-                                        .toString() +
-                                    '@2x?access_token=' +
-                                    dotenv.env['MAPBOX_TOKEN'].toString(),
-                            fit: BoxFit.contain,
-                          );
-                        }),
-                      ),
-                      Container(
-                        alignment: Alignment.topLeft,
-                        child: Container(
-                          constraints: BoxConstraints(maxWidth: 200),
-                          margin: EdgeInsets.only(top: 10, left: 5),
-                          padding: EdgeInsets.fromLTRB(10, 7, 10, 7),
-                          decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(20),
-                              gradient: LinearGradient(
-                                  begin: Alignment(-2.870196942339476e-7,
-                                      -2.9523809173103817),
-                                  end: Alignment(-3.471565204193894e-7,
-                                      7.0714286847386845),
-                                  stops: [0, 0.7713881134986877],
-                                  colors: [
-                                    Color.fromARGB(155, 157, 75, 239)
-                                        .withOpacity(0.9),
-                                    Color.fromARGB(158, 38, 146, 192)
-                                        .withOpacity(0.93),
-                                  ],
-                                  tileMode: TileMode.clamp)),
-                          child: Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.done_outlined),
-                                Text(
-                                  "${(widget.initData as dynamic)[2]['words']}",
-                                  style: TextStyle(color: Colors.black),
-                                )
-                              ]),
-                        ),
-                      ),
-                    ])))),
+                child: MediaQuery.of(context).size.height >= 550
+                    ? Container(
+                        height: MediaQuery.of(context).size.height <= 637
+                            ? MediaQuery.of(context).size.height * 0.2
+                            : MediaQuery.of(context).size.height * 0.35,
+                        width: MediaQuery.of(context).size.width,
+                        child: Stack(children: [
+                          Container(
+                            width: double.infinity,
+                            child:
+                                LayoutBuilder(builder: (context, constraints) {
+                              return // create function here to adapt to the parent widget's constraints
+                                  CachedNetworkImage(
+                                imageUrl:
+                                    'https://api.mapbox.com/styles/v1/mapbox/' +
+                                        ((Theme.of(context).brightness ==
+                                                Brightness.dark)
+                                            ? "dark-v10"
+                                            : "streets-v11") +
+                                        '/static/pin-s+f74e4e(' +
+                                        (widget.initData as dynamic)[0][
+                                                'Longitude']
+                                            .toString() +
+                                        ',' +
+                                        ((widget
+                                                    .initData as dynamic)[0]
+                                                ['Latitude']
+                                            .toString()) +
+                                        '),pin-s-home+555555(' +
+                                        (widget.initData
+                                                as dynamic)[1]
+                                            .longitude
+                                            .toString() +
+                                        ',' +
+                                        ((widget.initData
+                                                as dynamic)[1]
+                                            .latitude
+                                            .toString()) +
+                                        '/auto/' +
+                                        (constraints.maxWidth * 0.65)
+                                            .floor()
+                                            .toString() +
+                                        'x' +
+                                        (constraints.maxHeight * 0.65)
+                                            .floor()
+                                            .toString() +
+                                        '@2x?access_token=' +
+                                        dotenv.env['MAPBOX_TOKEN'].toString(),
+                                fit: BoxFit.contain,
+                              );
+                            }),
+                          ),
+                          Container(
+                            alignment: Alignment.topLeft,
+                            child: Container(
+                              constraints: BoxConstraints(maxWidth: 200),
+                              margin: EdgeInsets.only(top: 10, left: 5),
+                              padding: EdgeInsets.fromLTRB(10, 7, 10, 7),
+                              decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(20),
+                                  gradient: LinearGradient(
+                                      begin: Alignment(-2.870196942339476e-7,
+                                          -2.9523809173103817),
+                                      end: Alignment(-3.471565204193894e-7,
+                                          7.0714286847386845),
+                                      stops: [0, 0.7713881134986877],
+                                      colors: [
+                                        Color.fromARGB(155, 157, 75, 239)
+                                            .withOpacity(0.9),
+                                        Color.fromARGB(158, 38, 146, 192)
+                                            .withOpacity(0.93),
+                                      ],
+                                      tileMode: TileMode.clamp)),
+                              child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.done_outlined,
+                                        color: Colors.black),
+                                    Text(
+                                      "${(widget.initData as dynamic)[2]['words']}",
+                                      style: TextStyle(color: Colors.black),
+                                    )
+                                  ]),
+                            ),
+                          ),
+                        ]))
+                    : SizedBox.shrink())),
         Container(
             padding: EdgeInsets.only(left: 20),
             child: Row(
               children: [
                 Icon(
                   Icons.health_and_safety_outlined,
+                  color: Theme.of(context).primaryColor,
                   size: 35,
                 ),
                 Text(" Nearest AED",
                     textAlign: TextAlign.left,
                     style: TextStyle(
+                      color: Theme.of(context).primaryColor,
                       fontFamily: 'Raleway',
                       fontSize: 35,
                     )),
@@ -337,7 +377,7 @@ class _BlueState extends State<Blue> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
-          margin: EdgeInsets.fromLTRB(22, 30, 22, 10),
+          margin: EdgeInsets.fromLTRB(22, 20, 22, 10),
           child: Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(20),
@@ -363,16 +403,19 @@ class _BlueState extends State<Blue> {
                           style: TextStyle(
                             fontFamily: 'Raleway',
                             fontSize: 30,
+                            color: Colors.black,
                           )),
                       subtitle: Row(children: [
                         Icon(
                           Icons.directions_walk_outlined,
                           size: 17,
+                          color: Colors.black,
                         ),
                         Text(
                             ' ${(widget.initData as dynamic)[3]} minutes away.',
                             style: TextStyle(
                               fontSize: 17,
+                              color: Colors.black,
                             ))
                       ]),
                     ),
@@ -387,6 +430,7 @@ class _BlueState extends State<Blue> {
                           style: {
                             "body": Style(
                                 fontSize: FontSize(20),
+                                color: Colors.black,
                                 fontFamily: 'KrubLight'),
                           }),
                     ),
@@ -417,13 +461,13 @@ class _BlueState extends State<Blue> {
           ),
         ),
         Container(
-          margin: EdgeInsets.fromLTRB(20, 50, 20, 0),
+          margin: EdgeInsets.fromLTRB(20, 10, 20, 0),
           child: DecoratedBox(
               decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(15),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.grey.withOpacity(0.5),
+                      color: Colors.grey.withOpacity(0.1),
                       spreadRadius: 5,
                       blurRadius: 7,
                       offset: Offset(0, 3), // changes position of shadow
@@ -444,10 +488,8 @@ class _BlueState extends State<Blue> {
                 child: ElevatedButton(
                   onPressed: () {
                     MapsLauncher.launchCoordinates(
-                        (widget.initData as dynamic)[0]['position']['geopoint']
-                            .latitude,
-                        (widget.initData as dynamic)[0]['position']['geopoint']
-                            .longitude);
+                        (widget.initData as dynamic)[0]['Latitude'],
+                        (widget.initData as dynamic)[0]['Longitude']);
                   },
                   style: ButtonStyle(
                     shape: MaterialStateProperty.all<RoundedRectangleBorder>(
@@ -463,7 +505,7 @@ class _BlueState extends State<Blue> {
                     ),
                   ),
                   child: Text(
-                    'Get directions.',
+                    'Get Directions',
                     style: TextStyle(
                       fontFamily: 'Raleway',
                       color: Colors.black,
