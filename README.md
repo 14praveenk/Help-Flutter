@@ -11,5 +11,5 @@
 # Introduction
 
 
-Welcome to Help. This repository holds most of the code behind the Help app.
+Welcome to Help. This repository holds the code behind the Help app.
 <hr>
