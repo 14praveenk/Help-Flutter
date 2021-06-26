@@ -1,10 +1,8 @@
 import 'dart:async';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:bottom_navy_bar/bottom_navy_bar.dart';
-import 'package:flutter_html/flutter_html.dart';
+import 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart';
 import 'init.dart';
-import 'splash.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:mapbox_gl/mapbox_gl.dart';
@@ -427,16 +425,15 @@ class _BlueState extends State<Blue> {
                   Stack(children: [
                     Container(
                       margin: EdgeInsets.fromLTRB(35, 20, 35, 20),
-                      child: Html(
-                          data: ((widget.initData as dynamic)[0]
-                                  as dynamic)['Description']
-                              .replaceAll(RegExp('<br />\\s+'), "<br />"),
-                          style: {
-                            "body": Style(
-                                fontSize: FontSize(20),
-                                color: Colors.black,
-                                fontFamily: 'KrubLight'),
-                          }),
+                      child: HtmlWidget(
+                        ((widget.initData as dynamic)[0]
+                                as dynamic)['Description']
+                            .replaceAll(RegExp('<br />\\s+'), "<br />"),
+                        textStyle: TextStyle(
+                            fontFamily: 'KrubLight',
+                            color: Colors.black,
+                            fontSize: 20.0),
+                      ),
                     ),
                     /* COULD ADD INFO BUTTON NOT SURE?: Container(
                       margin: EdgeInsets.fromLTRB(0, 50, 10, 10),

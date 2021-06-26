@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_html/flutter_html.dart';
+import 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:georange/georange.dart';
 
@@ -59,13 +59,12 @@ class _markerPopupMsg extends State<markerPopupMsg> {
                       'Location: ${((widget.initData as dynamic)[4][aedIndex[0]] as dynamic)['address']}',
                       style: const TextStyle(fontSize: 12.0),
                     ),
-                    Html(
-                        data: ((widget.initData as dynamic)[0]
-                                as dynamic)['description']
-                            .replaceAll(RegExp('<br />\\s+'), "<br />"),
-                        style: {
-                          "body": Style(fontSize: FontSize(12.0)),
-                        }),
+                    HtmlWidget(
+                      ((widget.initData as dynamic)[0]
+                              as dynamic)['description']
+                          .replaceAll(RegExp('<br />\\s+'), "<br />"),
+                      textStyle: TextStyle(fontSize: 12.0),
+                    ),
                   ],
                 ),
               ),
