@@ -23,13 +23,12 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
       
-      - shell: bash
+      - name: 🤫 Exporting Secrets
         env:
           MAPBOX_PUBLIC_PUBLIC: ${{ secrets.MAPBOX_PUBLIC_PUBLIC }}
           W3WKEY: ${{ secrets.W3WKEY }}
           MAPBOX_TOKEN: ${{ secrets.MAPBOX_TOKEN }}
           MAPTILER_KEY : $${ secrets.MAPTILER_KEY }}
-      - name: 🤫 Exporting Secrets
         run: |
           echo $W3WKEY > dotenv
           echo $MAPBOX_TOKEN >> dotenv
