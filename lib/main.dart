@@ -1,12 +1,12 @@
 import 'dart:async';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart';
 import 'init.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:mapbox_gl/mapbox_gl.dart';
-import 'package:mapbox_gl/mapbox_gl.dart' as mapBox;
+import 'package:latlong2/latlong.dart';
 import 'package:maps_launcher/maps_launcher.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -180,7 +180,46 @@ class Red extends StatefulWidget {
 }
 
 class _RedState extends State<Red> {
-  late MapboxMapController controller;
+  List<Marker> allMarkers = [];
+  List<String> hashMarkers = [];
+  late final MapController mapController;
+  @override
+  void initState() {
+    super.initState();
+    mapController = MapController();
+    Future.microtask(() {
+      var r = (widget.initData as dynamic)[5].length - 1;
+      for (var x = 0; x < r; x++) {
+        int q = (widget.initData as dynamic)[5][(x + 1)];
+        allMarkers.add(
+          Marker(
+            point: LatLng((((widget.initData as dynamic)[4][q]['Latitude'])),
+                (((widget.initData as dynamic)[4][q]['Longitude']))),
+            builder: (context) => const Icon(
+              Icons.favorite_sharp,
+              color: Colors.red,
+              size: 25.0,
+            ),
+          ),
+        );
+      }
+      setState(() {});
+    });
+  }
+
+  void _onScroll(final PointerSignalEvent pointerSignal) {
+    if (pointerSignal is PointerScrollEvent) {
+      // Check whether the mouse is scrolled down and change the zoom level
+      final delta = pointerSignal.scrollDelta.dy > 0 ? -1 : 1;
+      final zoom = this.mapController.zoom + delta;
+      // Check whether the zoom level is available and apply zoom level
+      if (zoom >= 1 && zoom <= 19) {
+        this.mapController.move(this.mapController.center, zoom);
+      }
+    }
+  }
+
+  /*late MapboxMapController controller;
   void _onMapCreated(MapboxMapController controller) {
     this.controller = controller;
     controller.setTelemetryEnabled(false);
@@ -199,26 +238,35 @@ class _RedState extends State<Red> {
             circleRadius: 6),
       );
     }
-  }
+  }*/
 
   @override
   Widget build(BuildContext context) {
     return Container(
-        child:
-            /*FlutterMap(
-      options: MapOptions(
-        center: LatLng((widget.initData as dynamic)[1].latitude,
-            (widget.initData as dynamic)[1].longitude),
-        zoom: 13.0,
-        onTap: (_) => _popupLayerController.hidePopup(),
-      ),
-      children: [
-        TileLayerWidget(
-          options: TileLayerOptions(
-              urlTemplate: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-              subdomains: ['a', 'b', 'c']),
-        ),
-        PopupMarkerLayerWidget(
+        child: Stack(children: [
+      Listener(
+          onPointerSignal: this._onScroll,
+          child: FlutterMap(
+            mapController: mapController,
+            options: MapOptions(
+              center: LatLng((widget.initData as dynamic)[1].latitude,
+                  (widget.initData as dynamic)[1].longitude),
+              zoom: 13.0,
+              maxZoom: 18.0,
+              minZoom: 7.0,
+            ),
+            children: [
+              TileLayerWidget(
+                options: TileLayerOptions(
+                    urlTemplate: "https://api.maptiler.com/maps/" +
+                        (Theme.of(context).brightness == Brightness.dark
+                            ? "uk-openzoomstack-night"
+                            : "uk-openzoomstack-light") +
+                        "/256/{z}/{x}/{y}.png?key=" +
+                        dotenv.env['MAPTILER_KEY'].toString(),
+                    subdomains: ['a', 'b', 'c']),
+              ),
+              /*PopupMarkerLayerWidget(
           options: PopupMarkerLayerOptions(
             markers: allMarkers,
             popupSnap: widget.snap,
@@ -233,9 +281,12 @@ class _RedState extends State<Red> {
                 ? PopupAnimation.fade(duration: Duration(milliseconds: 700))
                 : null,
           ),
-        ),
-      ],*/
-            MapboxMap(
+        ),*/
+            ],
+            layers: [
+              MarkerLayerOptions(markers: allMarkers),
+            ],
+            /*MapboxMap(
                 onMapCreated: _onMapCreated,
                 onStyleLoadedCallback: _onStyleLoadedCallback,
                 accessToken: dotenv.env['MAPBOX_PUBLIC_PUBLIC'].toString(),
@@ -246,7 +297,20 @@ class _RedState extends State<Red> {
                     zoom: 11,
                     target: mapBox.LatLng(
                         (widget.initData as dynamic)[1].latitude,
-                        (widget.initData as dynamic)[1].longitude))));
+                        (widget.initData as dynamic)[1].longitude)))*/
+          )),
+      Align(
+          alignment: Alignment.bottomRight,
+          child: Container(
+              margin: EdgeInsets.fromLTRB(0, 0, 10, 5),
+              child: HtmlWidget(
+                  '<a class="attribution href="https://www.maptiler.com/copyright/" target="_blank">&copy; MapTiler</a> <a class="attribution href="https://www.openstreetmap.org/copyright" target="_blank">&copy; OpenStreetMap contributors</a>',
+                  customStylesBuilder: (element) {
+                if (element.classes.contains('attribution')) {
+                  return {'text-decoration': 'none'};
+                }
+              })))
+    ]));
   }
 }
 

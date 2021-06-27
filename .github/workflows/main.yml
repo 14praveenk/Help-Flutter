@@ -28,10 +28,13 @@ jobs:
           MAPBOX_PUBLIC_PUBLIC: ${{ secrets.MAPBOX_PUBLIC_PUBLIC }}
           W3WKEY: ${{ secrets.W3WKEY }}
           MAPBOX_TOKEN: ${{ secrets.MAPBOX_TOKEN }}
+          MAPTILER_KEY : $${ secrets.MAPTILER_KEY }}
+      - name: 🤫 Exporting Secrets
         run: |
           echo $W3WKEY > dotenv
           echo $MAPBOX_TOKEN >> dotenv
           echo $MAPBOX_PUBLIC_PUBLIC >> dotenv
+          echo $MAPTILER_KEY >> dotenv
 
       - name: 🏗️ Flutter Setup
         uses: subosito/flutter-action@v1

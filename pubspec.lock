@@ -215,7 +215,7 @@ packages:
     source: sdk
     version: "0.0.0"
   flutter_typeahead:
-    dependency: "direct overridden"
+    dependency: "direct main"
     description:
       name: flutter_typeahead
       url: "https://pub.dartlang.org"
@@ -248,21 +248,21 @@ packages:
     source: hosted
     version: "1.0.0"
   google_nav_bar:
-    dependency: "direct overridden"
+    dependency: "direct main"
     description:
       name: google_nav_bar
       url: "https://pub.dartlang.org"
     source: hosted
     version: "5.0.5"
   hive:
-    dependency: "direct overridden"
+    dependency: "direct main"
     description:
       name: hive
       url: "https://pub.dartlang.org"
     source: hosted
     version: "2.0.4"
   hive_flutter:
-    dependency: "direct overridden"
+    dependency: "direct main"
     description:
       name: hive_flutter
       url: "https://pub.dartlang.org"
@@ -304,7 +304,7 @@ packages:
     source: hosted
     version: "0.17.0"
   introduction_screen:
-    dependency: "direct overridden"
+    dependency: "direct main"
     description:
       name: introduction_screen
       url: "https://pub.dartlang.org"
@@ -359,49 +359,15 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.0.1"
-  mapbox_gl:
-    dependency: "direct main"
-    description:
-      path: "."
-      ref: HEAD
-      resolved-ref: f90d54d43fe00f57a41c1c370756ce46916878b3
-      url: "https://github.com/tobrun/flutter-mapbox-gl.git"
-    source: git
-    version: "0.12.0"
-  mapbox_gl_dart:
-    dependency: transitive
-    description:
-      name: mapbox_gl_dart
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "0.2.0-nullsafety.0"
-  mapbox_gl_platform_interface:
-    dependency: "direct overridden"
-    description:
-      path: mapbox_gl_platform_interface
-      ref: HEAD
-      resolved-ref: f90d54d43fe00f57a41c1c370756ce46916878b3
-      url: "https://github.com/tobrun/flutter-mapbox-gl.git"
-    source: git
-    version: "0.12.0"
-  mapbox_gl_web:
-    dependency: "direct overridden"
-    description:
-      path: mapbox_gl_web
-      ref: HEAD
-      resolved-ref: f90d54d43fe00f57a41c1c370756ce46916878b3
-      url: "https://github.com/tobrun/flutter-mapbox-gl.git"
-    source: git
-    version: "0.12.0"
   mapbox_search:
-    dependency: "direct overridden"
+    dependency: "direct main"
     description:
       name: mapbox_search
       url: "https://pub.dartlang.org"
     source: hosted
     version: "3.0.0-nullsafety.0"
   maps_launcher:
-    dependency: "direct overridden"
+    dependency: "direct main"
     description:
       name: maps_launcher
       url: "https://pub.dartlang.org"
@@ -597,7 +563,7 @@ packages:
     source: hosted
     version: "5.1.0"
   sentry_flutter:
-    dependency: "direct overridden"
+    dependency: "direct main"
     description:
       name: sentry_flutter
       url: "https://pub.dartlang.org"
