@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:geocode/geocode.dart';
 import 'package:mapbox_search/mapbox_search.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:hive/hive.dart';
@@ -6,7 +7,6 @@ import 'package:hive/hive.dart';
 class customLocationScreen extends StatefulWidget {
   /// API Key of the MapBox.
   final String apiKey = dotenv.env['MAPBOX_TOKEN'].toString();
-
   /// The callback that is called when the user taps on the search icon.
   // final void Function(MapBoxPlaces place) onSearch;
 
@@ -23,7 +23,7 @@ class _customLocationScreenState extends State<customLocationScreen>
     with SingleTickerProviderStateMixin {
   TextEditingController _textEditingController = TextEditingController();
 
-  List<MapBoxPlace> _placePredictions = [];
+  List<Suggestion> _placePredictions = [];
 
   // MapBoxPlace _selectedPlace;
 
@@ -99,9 +99,9 @@ class _customLocationScreenState extends State<customLocationScreen>
     );
   }
 
-  Widget _placeOption(MapBoxPlace prediction) {
-    String? place = prediction.text;
-    String? fullName = prediction.placeName;
+  Widget _placeOption(Suggestion prediction) {
+    String? place = prediction.name;
+    String? fullName = prediction.fullAddress ?? "";
 
     return MaterialButton(
       padding: EdgeInsets.symmetric(horizontal: 10, vertical: 3),
@@ -148,42 +148,73 @@ class _customLocationScreenState extends State<customLocationScreen>
     );
   }
 
-  // Methods
-  Future _autocompletePlace(String input) async {
-    /// Will be called when the input changes. Making callbacks to the Places
-    /// Api and giving the user Place options
-    ///
-    if (input.length > 0) {
-      var placesSearch = PlacesSearch(
-        apiKey: widget.apiKey,
-        country: widget.country,
-      );
+Future _autocompletePlace(String input) async {
+  if (input.isNotEmpty) {
+    // Use the new GeoCoding class instead of PlacesSearch
+    final geoCoding = SearchBoxAPI(
+      apiKey: widget.apiKey, // or omit if you already called MapBoxSearch.init(...)
+      limit: 5, // optional limit on the number of places returned
+      // country: widget.country, // pass any country or other relevant parameters if needed
+    );
 
-      final predictions = await placesSearch.getPlaces(
-        input,
-      );
-      setState(() => _placePredictions = predictions!);
-    } else {
-      setState(() => _placePredictions = []);
-    }
+    // getPlaces now returns an ApiResponse type
+    final apiResponse = await geoCoding.getSuggestions(
+    input,
+  );
+    // Handle Success or Failure with fold
+    apiResponse.fold(
+      (successData) {
+        setState(() => _placePredictions = successData.suggestions);
+      },
+      (failureData) {
+        // In case of an error, handle it or log it. For example:
+        setState(() => _placePredictions = []);
+      },
+    );
+  } else {
+    // If the input is empty, clear predictions
+    setState(() => _placePredictions = []);
   }
+}
 
-  void _selectPlace(MapBoxPlace prediction) async {
+
+  void _selectPlace(Suggestion prediction) async {
     /// Will be called when a user selects one of the Place options.
     // Sets TextField value to be the location selected
     _textEditingController.value = TextEditingValue(
-      text: prediction.placeName.toString(),
-      selection: TextSelection.collapsed(offset: prediction.placeName!.length),
+      text: prediction.name.toString(),
+      selection: TextSelection.collapsed(offset: prediction.name!.length),
     );
-    setState(() {
+    final geoCode = GeoCode();
+    try {
+      final geoCoding = SearchBoxAPI(
+      apiKey: widget.apiKey, // or omit if you already called MapBoxSearch.init(...)
+      limit: 5, // optional limit on the number of places returned
+      // country: widget.country, // pass any country or other relevant parameters if needed
+    );
+      final ApiResponse<RetrieveResonse> searchPlace = await geoCoding.getPlace(prediction.mapboxId);
+      final coordinates = searchPlace.fold(
+        (successData) {
+          return(successData.features[0].geometry.coordinates);
+        },
+        (failureData) {
+          // Handle failure case
+          return null;
+        },
+      );
+      setState(() {
+      final List<double> coordForm = [coordinates!.long, coordinates!.lat];
       _placePredictions = [];
       // _selectedPlace = prediction;
       var box = Hive.box('settings');
       box.put("useGNSS", false);
-      box.put("cusLocation", prediction.placeName.toString());
-      box.put("cusLocCoords", prediction.geometry!.coordinates);
+      box.put("cusLocation", prediction.name.toString());
+      box.put("cusLocCoords", coordForm);
+      print(coordForm);
     });
-
+    } catch (e) {
+      print("Error retrieving coordinates: $e");
+    }
     Navigator.pop(context, true);
   }
 }

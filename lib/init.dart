@@ -1,9 +1,6 @@
 import 'package:flutter/services.dart';
-import 'package:location/location.dart';
-import 'package:location/location.dart' as loc;
+import 'package:fl_location/fl_location.dart'; // new dependency import
 import 'dart:async';
-import 'package:what3words/what3words.dart';
-import 'package:what3words/what3words.dart' as w3w;
 import 'package:http/http.dart' as http;
 import 'dart:convert' as convert;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -11,35 +8,31 @@ import 'package:hive/hive.dart';
 import 'package:latlong2/latlong.dart';
 
 class Init {
-  String aname = "";
-  var api = What3WordsV3(dotenv.env['W3WKEY'].toString());
+  String aname = "";  
   Future initialize() async {
     LatLng currentPosition = await whatToDo();
     // Create and execute a request to obtain a grid section within the provided bounding box
-    var coordinates = await api
+    /* var coordinates = await api
         .convertTo3wa(w3w.Coordinates(
             currentPosition.latitude, currentPosition.longitude))
         .execute();
 
     if (coordinates.isSuccessful()) {
+      // Handle successful response
     } else {
       var error = coordinates.error();
 
-      if (error == What3WordsError.BAD_WORDS) {
-        // The three word address provided is invalid
+      if (error == w3w.What3WordsError.BAD_WORDS) {
         print('BadWords: ${error!.message}');
-      } else if (error == What3WordsError.INTERNAL_SERVER_ERROR) {
-        // Server Error
+      } else if (error == w3w.What3WordsError.INTERNAL_SERVER_ERROR) {
         print('InternalServerError: ${error!.message}');
-      } else if (error == What3WordsError.NETWORK_ERROR) {
-        // Network Error
+      } else if (error == w3w.What3WordsError.NETWORK_ERROR) {
         print('NetworkError: ${error!.message}');
       } else {
         print('${error!.code} : ${error.message}');
       }
-    }
+    }*/
     var setup = await _registerServices(currentPosition);
-    print("Finished registering services; returning back to main");
     var response = await http.get(Uri.parse(
         "https://api.mapbox.com/directions-matrix/v1/mapbox/walking/" +
             currentPosition.longitude.toString() +
@@ -51,11 +44,12 @@ class Init {
             (setup[0]['Latitude']).toString() +
             "?sources=0&destinations=1&annotations=duration&access_token=" +
             dotenv.env['MAPBOX_TOKEN'].toString()));
-    var duration = (convert.jsonDecode(response.body) as Map<String, dynamic>);
+    var duration =
+        (convert.jsonDecode(response.body) as Map<String, dynamic>);
     return [
       (setup[0]),
       currentPosition,
-      coordinates.data()?.toJson(),
+      2,
       ((duration['durations'][0][0] / 60).floor()),
       (setup[1]),
       (setup[2]),
@@ -69,16 +63,14 @@ class Init {
       var customLoc = box.get('cusLocCoords');
       return (LatLng(customLoc[1], customLoc[0]));
     } else {
-      LocationData currentPosition = await _determinePosition();
-
+      // Use fl_location API for obtaining the current position
+      Location currentPosition = await _determinePosition();
       return LatLng(currentPosition.latitude!.toDouble(),
           currentPosition.longitude!.toDouble());
     }
   }
 
   Future _registerServices(currentPosition) async {
-    print("Started registering services");
-
     double radius = 10;
     String field = 'position';
     final String response = await rootBundle.loadString('assets/aedlocs.json');
@@ -95,42 +87,38 @@ class Init {
           .toInt();
       if (distanceToAED < closestDist) {
         closestDist = distanceToAED;
-        closestsIndexs.add(closestIndex);
         closestIndex = x;
+        closestsIndexs.add(x);
       }
     }
     closestsIndexs.add(closestIndex);
     return [data[closestIndex], data, closestsIndexs];
   }
 
-  Future<loc.LocationData> _determinePosition() async {
-    loc.Location location = new loc.Location();
+  Future<Location> _determinePosition() async {
+    final location = FlLocation();
 
-    bool _serviceEnabled;
-    PermissionStatus _permissionGranted;
-    LocationData _locationData;
-
-    _serviceEnabled = await location.serviceEnabled();
-    if (!_serviceEnabled) {
-      _serviceEnabled = await location.requestService();
-      if (!_serviceEnabled) {
-        return Future.error("Not granted");
+    bool serviceEnabled = await FlLocation.isLocationServicesEnabled;
+    if (!serviceEnabled) {
+      LocationPermission permission = await FlLocation.checkLocationPermission();
+      if (permission == LocationPermission.denied) {
+        return Future.error("Location service not granted");
       }
     }
 
-    _permissionGranted = await location.hasPermission();
-    if (_permissionGranted == PermissionStatus.denied) {
-      _permissionGranted = await location.requestPermission();
-      if (_permissionGranted != PermissionStatus.granted) {
-        return Future.error("Not granted");
+    LocationPermission permissionStatus = await FlLocation.checkLocationPermission();
+    if (permissionStatus == LocationPermission.denied) {
+      permissionStatus = await FlLocation.requestLocationPermission();
+      if (permissionStatus == LocationPermission.denied) {
+        return Future.error("Location permission not granted");
       }
     }
-    if (_permissionGranted == PermissionStatus.deniedForever) {
+    if (permissionStatus == LocationPermission.deniedForever) {
       var box = Hive.box('settings');
       box.put("welcome_shown", false);
-      return Future.error("Not granted");
+      return Future.error("Location permission permanently denied");
     }
 
-    return await location.getLocation();
+    return await FlLocation.getLocation();
   }
 }

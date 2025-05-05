@@ -1,13 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:introduction_screen/introduction_screen.dart';
-import 'package:location/location.dart';
+import 'package:fl_location/fl_location.dart'; // updated dependency import
 import 'customLocation.dart';
-/*ElevatedButton(
-            onPressed: () {
-              var box = Hive.box('settings');
-              box.put("welcome_shown", true);
-            },*/
 
 class WelcomeScreen extends StatefulWidget {
   @override
@@ -19,28 +14,23 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
 
   final TextEditingController _textEditingController = TextEditingController();
   final introKey = GlobalKey<IntroductionScreenState>();
-  Location location = new Location();
+  FlLocation location = FlLocation(); // updated object creation
   bool _canShowLocButton = true;
   bool _canShowCustLocButton = true;
   bool locServiceEnabled = false;
   bool allDone = false;
-  PermissionStatus locPermissionEnabled = PermissionStatus.denied;
+  
+  @override
   void initState() {
     super.initState();
-    Future.microtask(() async {
-      await determineLocCompatibility();
-      if (locServiceEnabled == false) {
-        await hideLocButton();
-      }
-      if (locPermissionEnabled == PermissionStatus.deniedForever) {
-        await hideLocButton();
-      }
-    });
+    _checkLocationPermission();
   }
 
-  Future<void> determineLocCompatibility() async {
-    locServiceEnabled = await location.serviceEnabled();
-    locPermissionEnabled = await location.hasPermission();
+  Future<void> _checkLocationPermission() async {
+    LocationPermission permission = await FlLocation.checkLocationPermission();
+    if (permission == LocationPermission.deniedForever) {
+      hideLocButton();
+    }
   }
 
   Future<void> hideLocButton() async {
@@ -60,11 +50,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   }
 
   void _navToCustomLocationScreen(BuildContext context) async {
-    // Navigator.push returns a Future that completes after calling
-    // Navigator.pop on the Selection Screen.
+    // Navigator.push returns a Future that completes after calling Navigator.pop on the Selection Screen.
     final result = await Navigator.push(
       context,
-      // Create the SelectionScreen in the next step.
       MaterialPageRoute(builder: (context) => customLocationScreen()),
     ).then((value) {
       if (value == true) {
@@ -96,6 +84,11 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
           ? Colors.black
           : Colors.white,
     );
+    var buttonStyle =TextStyle(
+                          fontSize: 18.0, fontWeight: FontWeight.bold,color: Theme.of(context).brightness == Brightness.light
+          ? Colors.black
+          : Colors.white,
+                    );
     var titleStyle = TextStyle(
       fontSize: 28.0,
       fontFamily: 'Raleway',
@@ -108,7 +101,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
       titleTextStyle: TextStyle(
           fontSize: 28.0, fontFamily: 'Raleway', fontWeight: FontWeight.w700),
       bodyTextStyle: bodyStyle,
-      descriptionPadding: EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 16.0),
+      bodyPadding: EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 16.0),
       pageColor: Theme.of(context).brightness == Brightness.light
           ? Colors.white
           : Colors.black87,
@@ -170,41 +163,35 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
             _canShowLocButton
                 ? ElevatedButton(
                     style: ButtonStyle(
-                        padding: MaterialStateProperty.all<EdgeInsets>(
+                        padding: WidgetStateProperty.all<EdgeInsets>(
                             EdgeInsets.fromLTRB(40, 20, 40, 20)),
-                        backgroundColor: MaterialStateProperty.all<Color>(
+                        backgroundColor: WidgetStateProperty.all<Color>(
                             Color(0xFF28a745))),
-                    child: const Text(
+                    child: Text(
                       'Allow Location Access',
-                      style: TextStyle(
-                          fontSize: 16.0, fontWeight: FontWeight.bold),
-                    ),
+                      style: buttonStyle),
                     onPressed: () async {
                       bool _serviceEnabled;
-                      PermissionStatus _permissionGranted;
-                      LocationData _locationData;
-                      _serviceEnabled = await location.serviceEnabled();
+                      LocationPermission _permissionGranted = await FlLocation.checkLocationPermission();
+                      // Updated API call for fl_location below
+                      _serviceEnabled = await FlLocation.isLocationServicesEnabled;
                       if (!_serviceEnabled) {
-                        _serviceEnabled = await location.requestService();
+                        _permissionGranted = await FlLocation.requestLocationPermission();
                         if (!_serviceEnabled) {}
                       }
-
-                      _permissionGranted = await location.hasPermission();
-                      if (_permissionGranted == PermissionStatus.denied) {
-                        _permissionGranted = await location.requestPermission();
-                        if (_permissionGranted != PermissionStatus.granted) {
+                      if (_permissionGranted == LocationPermission.denied) {
+                        if (_permissionGranted != LocationPermission.always) {
                           hideLocButton();
                         }
-                        if (_permissionGranted == PermissionStatus.granted) {
+                        if (_permissionGranted == LocationPermission.denied) {
                           hideAllButton();
                           introKey.currentState?.skipToEnd();
                         }
                       }
-                      if (_permissionGranted ==
-                          PermissionStatus.deniedForever) {
+                      if (_permissionGranted == LocationPermission.deniedForever) {
                         hideLocButton();
                       }
-                      if (_permissionGranted == PermissionStatus.granted) {
+                      if (_permissionGranted == LocationPermission.always) {
                         hideAllButton();
                       }
                     })
@@ -227,14 +214,18 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
           decoration: pageDecoration,
         ),
       ],
-
-      //onSkip: () => _onIntroEnd(context), // You can override onSkip callback
+      onDone: () {
+        hideAllButton();
+        // You can also navigate to another screen here
+      },
       showSkipButton: false,
-      skipFlex: 0,
       showDoneButton: false,
-      nextFlex: 0,
-      //rtl: true, // Display as right-to-left
-      next: Row(children: [Text("Next "), Icon(Icons.arrow_forward)]),
+      showBackButton: true,
+      back: Row(children: [Icon(Icons.arrow_back),Text(" Back")]),
+      next: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [Text("Next "), Icon(Icons.arrow_forward)],
+      ),
       done: const Text('Done', style: TextStyle(fontWeight: FontWeight.w600)),
       curve: Curves.fastLinearToSlowEaseIn,
       controlsMargin: const EdgeInsets.all(16),

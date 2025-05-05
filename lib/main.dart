@@ -2,20 +2,20 @@ import 'dart:async';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_map_cancellable_tile_provider/flutter_map_cancellable_tile_provider.dart';
 import 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart';
 import 'init.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:maps_launcher/maps_launcher.dart';
-import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'welcome.dart';
-import 'package:flutter/widgets.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
 
 Future<void> main() async {
+  await runZonedGuarded(() async {
   await dotenv.load(fileName: "dotenv");
   WidgetsFlutterBinding.ensureInitialized();
   await Hive.initFlutter();
@@ -25,8 +25,15 @@ Future<void> main() async {
       options.dsn =
           'https://74695678b2ad4ed488ee3546716682dd@o863841.ingest.sentry.io/5822329';
     },
-    appRunner: () => runApp(App()),
-  );
+    appRunner: () => runApp(SentryWidget(
+        child: MyApp(),
+      ),),
+  );}, (error, stackTrace) async {
+    await Sentry.captureException(
+      error,
+      stackTrace: stackTrace,
+    );
+  });
 }
 
 class App extends StatefulWidget {
@@ -93,7 +100,7 @@ class _MyHomePageState extends State<MyHomePage> {
     pageList.add(Red(initData: widget.initData));
     pageList.add(Blue(initData: widget.initData));
     super.initState();
-    WidgetsBinding.instance!.addPostFrameCallback((_) {});
+    WidgetsBinding.instance.addPostFrameCallback((_) {});
   }
 
   @override
@@ -195,7 +202,7 @@ class _RedState extends State<Red> {
           Marker(
             point: LatLng((((widget.initData as dynamic)[4][q]['Latitude'])),
                 (((widget.initData as dynamic)[4][q]['Longitude']))),
-            builder: (context) => const Icon(
+            child: const Icon(
               Icons.favorite_sharp,
               color: Colors.red,
               size: 25.0,
@@ -209,12 +216,13 @@ class _RedState extends State<Red> {
 
   void _onScroll(final PointerSignalEvent pointerSignal) {
     if (pointerSignal is PointerScrollEvent) {
-      // Check whether the mouse is scrolled down and change the zoom level
       final delta = pointerSignal.scrollDelta.dy > 0 ? -1 : 1;
-      final zoom = this.mapController.zoom + delta;
-      // Check whether the zoom level is available and apply zoom level
+      final currentPosition = mapController.camera;
+      final currentZoom = currentPosition.zoom;
+      final currentCenter = currentPosition.center;
+      final zoom = currentZoom + delta;
       if (zoom >= 1 && zoom <= 19) {
-        this.mapController.move(this.mapController.center, zoom);
+        mapController.move(currentCenter, zoom);
       }
     }
   }
@@ -249,23 +257,22 @@ class _RedState extends State<Red> {
           child: FlutterMap(
             mapController: mapController,
             options: MapOptions(
-              center: LatLng((widget.initData as dynamic)[1].latitude,
+              initialCenter: LatLng((widget.initData as dynamic)[1].latitude,
                   (widget.initData as dynamic)[1].longitude),
-              zoom: 13.0,
+              initialZoom: 13.0,
               maxZoom: 18.0,
               minZoom: 7.0,
             ),
             children: [
-              TileLayerWidget(
-                options: TileLayerOptions(
+              TileLayer(
                     urlTemplate: "https://api.maptiler.com/maps/" +
                         (Theme.of(context).brightness == Brightness.dark
                             ? "uk-openzoomstack-night"
                             : "uk-openzoomstack-light") +
                         "/256/{z}/{x}/{y}.png?key=" +
                         dotenv.env['MAPTILER_KEY'].toString(),
-                    subdomains: ['a', 'b', 'c']),
-              ),
+                    subdomains: ['a', 'b', 'c'],
+                    tileProvider: CancellableNetworkTileProvider()),
               /*PopupMarkerLayerWidget(
           options: PopupMarkerLayerOptions(
             markers: allMarkers,
@@ -282,9 +289,7 @@ class _RedState extends State<Red> {
                 : null,
           ),
         ),*/
-            ],
-            layers: [
-              MarkerLayerOptions(markers: allMarkers),
+              MarkerLayer(markers: allMarkers),
             ],
             /*MapboxMap(
                 onMapCreated: _onMapCreated,
@@ -309,6 +314,7 @@ class _RedState extends State<Red> {
                 if (element.classes.contains('attribution')) {
                   return {'text-decoration': 'none'};
                 }
+                return null;
               })))
     ]));
   }
@@ -384,7 +390,7 @@ class _BlueState extends State<Blue> {
                               );
                             }),
                           ),
-                          Container(
+                          /*Container(
                             alignment: Alignment.topLeft,
                             child: Container(
                               constraints: BoxConstraints(maxWidth: 200),
@@ -412,12 +418,12 @@ class _BlueState extends State<Blue> {
                                     Icon(Icons.done_outlined,
                                         color: Colors.black),
                                     Text(
-                                      "${(widget.initData as dynamic)[2]['words']}",
+                                      "hi",
                                       style: TextStyle(color: Colors.black),
                                     )
                                   ]),
                             ),
-                          ),
+                          ),*/
                         ]))
                     : SizedBox.shrink())),
         Container(
@@ -557,15 +563,15 @@ class _BlueState extends State<Blue> {
                         (widget.initData as dynamic)[0]['Longitude']);
                   },
                   style: ButtonStyle(
-                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                    shape: WidgetStateProperty.all<RoundedRectangleBorder>(
                       RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(15)),
                     ),
-                    elevation: MaterialStateProperty.all(0),
-                    foregroundColor: MaterialStateProperty.all(Colors.black),
+                    elevation: WidgetStateProperty.all(0),
+                    foregroundColor: WidgetStateProperty.all(Colors.black),
                     backgroundColor:
-                        MaterialStateProperty.all(Colors.transparent),
-                    padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
+                        WidgetStateProperty.all(Colors.transparent),
+                    padding: WidgetStateProperty.all<EdgeInsetsGeometry>(
                       EdgeInsets.all(27),
                     ),
                   ),
