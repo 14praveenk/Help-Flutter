@@ -43,7 +43,7 @@ jobs:
       - name: 🚧 Flutter Build Web
         run: |
           flutter pub get
-          flutter build web --no-sound-null-safety --web-renderer canvaskit
+          flutter build web
 
       - name: 🚀 Deploy to Vercel
         uses: amondnet/vercel-action@v20
