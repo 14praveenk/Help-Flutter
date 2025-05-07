@@ -53,6 +53,15 @@ dev_dependencies:
   flutter_launcher_icons: ^0.14.3
   flutter_test:
     sdk: flutter
+
+dependency_overrides:
+  # The flutter_keyboard_visibility_web uses dart:html which is incompatible with WASM, override it with a modified version that uses the web package instead.
+  flutter_keyboard_visibility_web:
+    git:
+      url: https://github.com/EchoEllet/flutter_keyboard_visibility_temp_fork.git
+      ref: master
+      path: flutter_keyboard_visibility_web
+      
 flutter_icons:
   android: true
   ios: false
