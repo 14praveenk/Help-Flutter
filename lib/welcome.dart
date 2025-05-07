@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
+import 'package:hive_ce/hive.dart';
 import 'package:introduction_screen/introduction_screen.dart';
 import 'package:fl_location/fl_location.dart'; // updated dependency import
 import 'customLocation.dart';

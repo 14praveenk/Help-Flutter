@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:geocode/geocode.dart';
 import 'package:mapbox_search/mapbox_search.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:hive/hive.dart';
+import 'package:hive_ce/hive.dart';
 
 class customLocationScreen extends StatefulWidget {
   /// API Key of the MapBox.

@@ -4,7 +4,7 @@ import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'dart:convert' as convert;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:hive/hive.dart';
+import 'package:hive_ce/hive.dart';
 import 'package:latlong2/latlong.dart';
 
 class Init {

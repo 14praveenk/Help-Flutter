@@ -9,18 +9,21 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:maps_launcher/maps_launcher.dart';
-import 'package:hive_flutter/hive_flutter.dart';
+import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'welcome.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
+import 'package:hive_ce/hive.dart';
+
 
 Future<void> main() async {
-  await runZonedGuarded(() async {
+  //await runZonedGuarded(() async {
   await dotenv.load(fileName: "dotenv");
   WidgetsFlutterBinding.ensureInitialized();
   await Hive.initFlutter();
   await Hive.openBox('settings');
-  await SentryFlutter.init(
+   runApp(MyApp());
+  /*await SentryFlutter.init(
     (options) {
       options.dsn =
           'https://74695678b2ad4ed488ee3546716682dd@o863841.ingest.sentry.io/5822329';
@@ -33,7 +36,7 @@ Future<void> main() async {
       error,
       stackTrace: stackTrace,
     );
-  });
+  });*/
 }
 
 class App extends StatefulWidget {
